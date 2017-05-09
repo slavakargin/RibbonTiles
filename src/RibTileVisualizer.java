@@ -5,8 +5,8 @@ import edu.princeton.cs.algs4.StdRandom;
 public class RibTileVisualizer {
 
 	public static void main(String[] args) {
-		int N = 18; //size of the square to tile
-		int M = 6;
+		int N = 6; //size of the square to tile
+		int M = 10;
 		RibTiling tiling;
 		double x, y, s; //coordinates of a random point and a random choice of direction
 		             //of the flip
@@ -14,8 +14,10 @@ public class RibTileVisualizer {
 			
 		//Setting up first tiling
 		Draw draw1 = new Draw("Tiling 1");
-		draw1.setXscale(-0.5, N + 0.5);
-		draw1.setYscale(-0.5, N + 0.5);
+		int size = N; 
+		if (M > N) size = M; 
+		draw1.setXscale(-0.5, size + 0.5);
+		draw1.setYscale(-0.5, size + 0.5);
 		draw1.clear(Draw.LIGHT_GRAY);
 		draw1.setPenRadius(0.005);
 		
@@ -24,7 +26,7 @@ public class RibTileVisualizer {
 	    //tiling = new RibTiling(N,M,0); //initiate a vertical tiling
 	    //tiling = new RibTiling(N,M,1); //initiate a horizontal tiling
 	    //tiling = new RibTiling(N,M,4); //initiate a type 4 tiling
-		M = 15;
+		
 	    tiling = new RibTiling(N,M,5); //initiate a type 5 tiling 
 		
 		int ITER = 30; // number of iterations
@@ -47,6 +49,12 @@ public class RibTileVisualizer {
 		tiling.draw(draw1);	
 		draw1.show(40);
 		}
+		
+		tiling.calcHeight();
+		tiling.height.modify();
+		tiling.height.print();
+		tiling.height.calcRouting();
+		tiling.height.printRouting();
 		
 		/*
 		RibTiling tiling = new RibTiling(N,0); //initiate a vertical tiling

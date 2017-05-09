@@ -11,11 +11,9 @@ public class RibTiling {
 	private HashSet<RibTile> tiling;
 	public int N; //height of the rectangle
 	public int M; //width of the rectangle
-	private Graph G; // This the graph of the tiling. It has (N + 1)-by-(M + 1) vertices which correspond
-	//to vertices of Z^2. Two vertices are connected if they belong to a border of a tile.
-	//We organize the vertices as follows. The first M + 1 vertices is the vertices in the 
-	//first row, the next
-	//M +1 vertices is the vertices in the second row and so on. 
+	private Graph G; // TO DO: this will be a digraph associated with the tiling by
+	                 // Sheffield's bijection. 
+	public Height height; //this is the height function on this tiling
 	
 	
 	/*
@@ -36,6 +34,8 @@ public class RibTiling {
 		this.N = N; 
 		this.M = M;
 		tiling = new HashSet<RibTile>();
+		height = new Height(N, M);
+		
 		if (type == 0) {
 			for (int i = 0; i < M; i++) {
 				for (int j = 0; j < N; j += 3) {
@@ -136,20 +136,14 @@ public class RibTiling {
 		}
 	}
 	private void makeGraph() {
-		G = new Graph((M + 1) * (N + 1));
-		//adding border 
-		for (int v = 0; v < M; v++){
-			G.addEdge(v, v + 1);
-			G.addEdge(v + (M + 1) * N, v + 1 + (M + 1) * N);
-		}
-		for (int x = 0; x < N; x++){
-			G.addEdge(x * (M + 1), (x + 1) * (M + 1));
-			G.addEdge((x + 1) * (M + 1) - 1,  (x + 2) * (M + 1) - 1);
-		}
-		//adding vertical edges.
-		for (int v = 0; v < N * (M + 1); v++) {
-						
-		}
+		//TO DO
+	}
+	/*
+	 * Calculates height vector function on the rectangle that corresponds to this 
+	 * tiling.
+	 */
+	public void calcHeight() {
+		height.calcHeight(this);
 	}
     /*
     //Checks if a tile belongs to this tiling
@@ -361,7 +355,7 @@ public class RibTiling {
     /*
      * //finds a tile that contains point (x,y)
      */
-	private RibTile findTile(double x, double y) { 
+	public RibTile findTile(double x, double y) { 
 		RibTile tile;
 		for (int i = 0; i < 3; i++ ) { //checking horizontal tiles
 			tile = new RibTile((int) x - i, (int) y, 1);
@@ -385,9 +379,9 @@ public class RibTiling {
 			  if (tiling.contains(tile)) return tile;	
 		tile = new RibTile((int) x - 1, (int) y - 1, 3);
 			  if (tiling.contains(tile)) return tile;		  			  
-		StdOut.println("have not found tile covering the point (" + x 
+	    /*StdOut.println("have not found tile covering the point (" + x 
 				+ ", " + y + ")." );
-		/*for (RibTile t : tiling) {
+		for (RibTile t : tiling) {
 			StdOut.println(t);
 		}*/
 		return null;
