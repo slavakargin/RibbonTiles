@@ -1,6 +1,6 @@
 import java.util.HashSet;
 import java.util.ArrayList;
-import edu.princeton.cs.algs4.Graph;
+//import edu.princeton.cs.algs4.Graph;
 import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdOut;
 
@@ -8,10 +8,10 @@ import edu.princeton.cs.algs4.StdOut;
  * This class describes a tiling on an N-by-M rectangle
  */
 public class RibTiling {
-	private HashSet<RibTile> tiling;
+	public HashSet<RibTile> tiling;
 	public int N; //height of the rectangle
 	public int M; //width of the rectangle
-	private Graph G; // TO DO: this will be a digraph associated with the tiling by
+//	private SheffieldGraph G; // TO DO: this will be a digraph associated with the tiling by
 	                 // Sheffield's bijection. 
 	public Height height; //this is the height function on this tiling
 	
@@ -135,9 +135,7 @@ public class RibTiling {
 			tile.drawFilled(dr);
 		}
 	}
-	private void makeGraph() {
-		//TO DO
-	}
+
 	/*
 	 * Calculates height vector function on the rectangle that corresponds to this 
 	 * tiling.

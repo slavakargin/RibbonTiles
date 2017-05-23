@@ -1,3 +1,4 @@
+import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdOut;
 
 /*
@@ -8,7 +9,7 @@ public class Height {
 	public int N; //The height of the rectangle (bound on y-coordinate).
 	public int M; //The width of the rectangle (bound on x-coordinate).
 	public int[][] heightX, heightY, heightZ; //the three components of the height
-	public int[] routing; 
+	public int[][] routing; 
 	
 	/*
 	 * Create a N-by-M height object (on the rectangle with height N and width M). 
@@ -19,7 +20,7 @@ public class Height {
 		heightX = new int[N + 1][M + 1];
 		heightY = new int[N + 1][M + 1];
 		heightZ = new int[N + 1][M + 1];
-		routing = new int[M + 1];
+		routing = new int[N][M + 1];
 	}
 
 	public Height(RibTiling T) {
@@ -182,14 +183,15 @@ public void modify() {
  * Calculate routings 
  */
 public void calcRouting(){
-	int t = 0; // threshold
+	for (int t = 0; t < N; t++) { // thresholds
 	for (int i = 0; i < M + 1; i++) {
 		for (int j = 1; j < N + 1; j++) {
 			if (heightX[j][i] > t) {
-				routing[i] = j - 1;
+				routing[t][i] = j - 1;
 				break;
 			}
 		}
+	}
 	}
 }
 /*
@@ -208,10 +210,24 @@ public void calcRouting(){
  * print routing
  */
 	public void printRouting() {
+		for (int t = 0; t < N; t++) {
 		for (int i = 0; i < M + 1; i++) {
-			StdOut.print(routing[i] + " ");
+			StdOut.print(routing[t][i] + " ");
 		}
 		StdOut.println();
+		}
 	}
 
+	/*
+	 * draws routing in the specified window
+	 */
+public void drawRouting(Draw dr) {
+	dr.setPenColor(Draw.PINK);
+	for (int t = 0; t < N; t++) {
+	for (int i = 0; i < M; i++) {
+	    dr.line(i, routing[t][i], i + 1, routing[t][i + 1]);
+	}
+	}
+	dr.show(40);
+}
 }

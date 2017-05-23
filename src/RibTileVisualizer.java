@@ -3,58 +3,73 @@ import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdRandom;
 
 public class RibTileVisualizer {
-
-	public static void main(String[] args) {
-		int N = 6; //size of the square to tile
-		int M = 10;
-		RibTiling tiling;
-		double x, y, s; //coordinates of a random point and a random choice of direction
-		             //of the flip
-		int success; //equals 1 if the flip was successful
-			
-		//Setting up first tiling
-		Draw draw1 = new Draw("Tiling 1");
-		int size = N; 
-		if (M > N) size = M; 
-		draw1.setXscale(-0.5, size + 0.5);
-		draw1.setYscale(-0.5, size + 0.5);
-		draw1.clear(Draw.LIGHT_GRAY);
-		draw1.setPenRadius(0.005);
-		
+	public RibTiling tiling;
+	public SheffieldGraph G;
+	
+	public RibTileVisualizer(int N, int M, int type) {
 		//tiling = new RibTiling(N,M,3); //initiate a``szepka'' tiling
 	    //tiling = new RibTiling(N,M,2); //initiate another ``szepka'' tiling
 	    //tiling = new RibTiling(N,M,0); //initiate a vertical tiling
 	    //tiling = new RibTiling(N,M,1); //initiate a horizontal tiling
 	    //tiling = new RibTiling(N,M,4); //initiate a type 4 tiling
 		
-	    tiling = new RibTiling(N,M,5); //initiate a type 5 tiling 
+	    tiling = new RibTiling(N,M,type); //initiate a type 5 tiling 
+	}
+	
+	public void draw(Draw dr) {
+		tiling.draw(dr);
+		dr.show(40);
+	}
+	
+	public void computeSheffieldGraph() {
+		 G = new SheffieldGraph(tiling);
+	}
+	
+
+	public static void main(String[] args) {
+		int N = 6; //size of the square to tile
+		int M = 10;
+		int type = 5;
+		RibTileVisualizer vz = new RibTileVisualizer(N, M, type); 
+
+		double x, y, s; //coordinates of a random point and a random choice of direction
+		             //of the flip
+		int success; //equals 1 if the flip was successful
+			
+		
+		//Setting up the window for the tiling
+				Draw draw1 = new Draw("Tiling");
+				int size = N; 
+				if (M > N) size = M; 
+				draw1.setXscale(-0.5, size + 0.5);
+				draw1.setYscale(-0.5, size + 0.5);
+				draw1.clear(Draw.LIGHT_GRAY);
+				draw1.setPenRadius(0.005);
+
 		
 		int ITER = 30; // number of iterations
 		
 		for (int k = 0; k < ITER; k++) {
 		x = StdRandom.uniform(0.,(double) M);
 		y = StdRandom.uniform(0.,(double) N);
-		//	x = 11.5;
-		//	y = 1.5;
-		//  x = 1.5;
-		//  y = 9.5;
 		s = StdRandom.uniform(0.,1.);
 		
-		success = tiling.randomFlip(x, y, s);
-		//StdOut.println("(x,y,s) = (" + x + ", " + y + ", " + s + ")" );
-		//StdOut.println("flip successful? " + success);
-		
-		
-		
-		tiling.draw(draw1);	
-		draw1.show(40);
+		success = vz.tiling.randomFlip(x, y, s);
+				
+		vz.draw(draw1);	//drawing the tiling
 		}
-		
+		vz.computeSheffieldGraph();
+		vz.G.reduce();
+		vz.G.draw(draw1); //drawing the graph
+		/*
 		tiling.calcHeight();
 		tiling.height.modify();
 		tiling.height.print();
 		tiling.height.calcRouting();
 		tiling.height.printRouting();
+		tiling.height.drawRouting(draw1);
+		*/
+		
 		
 		/*
 		RibTiling tiling = new RibTiling(N,0); //initiate a vertical tiling

@@ -1,6 +1,7 @@
 import edu.princeton.cs.algs4.Point2D;	
 import edu.princeton.cs.algs4.StdOut; 
 import edu.princeton.cs.algs4.Draw; 
+//import java.math.*;
 	/******************************************************************************
 	 *  Compilation:  javac RibTile.java
 	 *  Execution:    none
@@ -24,7 +25,8 @@ import edu.princeton.cs.algs4.Draw;
         // 2  _  (Russian G)
         //   |
         // 3   _|
-
+	    public long level;
+        public final int n = 3;
 	    /**
 	     * Initializes a new tile
 	     */
@@ -50,6 +52,7 @@ import edu.princeton.cs.algs4.Draw;
                     this.ymax = ymin + 2;
                     break;
 	        }
+	        level = Math.round(xmin + ymin);
 	    }
 	    
 	    
@@ -97,9 +100,51 @@ import edu.princeton.cs.algs4.Draw;
 	    	return false;
 	    }
 
+	    /*
+	     * compares two tiles in the sense of Sheffield. 
+	     * That is, if the this tile sends light in the northwest direction and illuminates at least some
+	     * part of the other tile, then the function returns 1. If the converse situation holds than the function 
+	     * returns -1. Otherwise, it returns 0 (in particular if they are the same).
+	     * 
+	     */
+	    public int compareWeak(RibTile other) {
+	    	if (this.equals(other)) {
+	    		return 0;
+	    	} 
+	       double c0 = this.xmin + this.ymin;
+	       double d0 = this.xmax + this.ymax;
+	       double c1 = other.xmin + other.ymin;
+	       double d1 = other.xmax + other.ymax;
+	       
+	       double r0 = this.ymin - this.xmin;
+	       double r1 = other.ymin - other.xmin;
+	       double s0 = this.ymax - this.xmax; //coordinate of the top right corner of this tile in northeast direction
+	       double s1 = other.ymax - other.xmax;
+
+	    	if (c0 >= d1 || c1 >= d0) {
+	    		return 0;
+	    	}
+	    	if (d1 - c0 >= d0 - c1) { //light in the northwest direction
+	    		//from lower left corner of the other tile must intersect this tile
+	    		if (s0 <= r1) {
+	    			return 1;
+	    		} else {
+	    			return -1;
+	    		}	    		
+	    	}
+	    	if (d1 - c0 < d0 - c1) { //light in the northwest direction
+	    		//from lower left corner of this tile must intersect the other tile
+	    		if (s1 <= r0) {
+	    			return -1;
+	    		} else {
+	    			return 1;
+	    		}	    		
+	    	}	    	
+	    	return 0;
+	    }
 
 	    /**
-	     * Compares this tile to the specified tile.
+	     * Compares this tile to the specified tile and returns true if they are the same
 	     *
 	     * @param  other the other tile
 	     * @return {@code true} if this tile equals {@code other};
