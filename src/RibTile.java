@@ -19,9 +19,9 @@ import edu.princeton.cs.algs4.Draw;
 	 */
 
 	public final class RibTile {
-	    public final double xmin, ymin;   // minimum x- and y-coordinates
+	    public double xmin, ymin;   // minimum x- and y-coordinates
 	    public double xmax, ymax;   // maximum x- and y-coordinates
-	    public final int type; //type of tile: 0 - vertical, 1 - horizontal,
+	    public int type; //type of tile: 0 - vertical, 1 - horizontal,
         // 2  _  (Russian G)
         //   |
         // 3   _|
@@ -54,6 +54,17 @@ import edu.princeton.cs.algs4.Draw;
 	        }
 	        level = Math.round(xmin + ymin);
 	    }
+	    /*
+	     * Creates a copy of an existing tile
+	     */
+	    public RibTile(RibTile tile) {
+	    	this.xmin = tile.xmin;
+	    	this.ymin = tile.ymin;
+	    	this.xmax = tile.xmax;
+	    	this.ymax = tile.ymax;
+	    	this.type = tile.type;
+	    	this.level = tile.level;
+	    }
 	    
 	    
 
@@ -74,6 +85,7 @@ import edu.princeton.cs.algs4.Draw;
 	    public double height() {
 	        return ymax - ymin;
 	    }
+	    
 
 	    /**
 	     * Returns true if this tile contain the point.
@@ -102,8 +114,9 @@ import edu.princeton.cs.algs4.Draw;
 
 	    /*
 	     * compares two tiles in the sense of Sheffield. 
-	     * That is, if the this tile sends light in the northwest direction and illuminates at least some
-	     * part of the other tile, then the function returns 1. If the converse situation holds than the function 
+	     * That is, if this tile sends light in the northwest direction and illuminates at least some
+	     * part of the other tile, then the function returns 1. (Other tile is to the left of this tile, other < this). 
+	     * If the converse situation holds than the function 
 	     * returns -1. Otherwise, it returns 0 (in particular if they are the same).
 	     * 
 	     */
@@ -111,36 +124,44 @@ import edu.princeton.cs.algs4.Draw;
 	    	if (this.equals(other)) {
 	    		return 0;
 	    	} 
-	       double c0 = this.xmin + this.ymin;
-	       double d0 = this.xmax + this.ymax;
-	       double c1 = other.xmin + other.ymin;
-	       double d1 = other.xmax + other.ymax;
+	       double c0 = this.level; 
+	       double c1 = other.level;
 	       
-	       double r0 = this.ymin - this.xmin;
-	       double r1 = other.ymin - other.xmin;
-	       double s0 = this.ymax - this.xmax; //coordinate of the top right corner of this tile in northeast direction
+	       double r0 = this.ymin - this.xmin; //y intercept of the lower left corner of this tile for the line y = x + r0
+	       double r1 = other.ymin - other.xmin; //same for the other tile
+	       double s0 = this.ymax - this.xmax; //y intercept of the upper right corner of this tile for the line y = x + s0
 	       double s1 = other.ymax - other.xmax;
 
-	    	if (c0 >= d1 || c1 >= d0) {
+	    	if (c0 >= c1 + n + 1 || c1 >= c0 + n + 1) {
 	    		return 0;
 	    	}
-	    	if (d1 - c0 >= d0 - c1) { //light in the northwest direction
-	    		//from lower left corner of the other tile must intersect this tile
-	    		if (s0 <= r1) {
+	    	if (c1 > c0) { //level of the other light is greater
+	    		//than the level of this tile and we know that these two tiles are comparable.
+	    		// hence the other tile is to the left of this tile if and only if 
+	    		//the y intercept of its lower left corner is strictly larger 
+	    		// then y intercept of the upper left corner of this tile
+	    		if (s0 < r1) {
 	    			return 1;
 	    		} else {
 	    			return -1;
 	    		}	    		
+	    	} else if (c1 < c0){ //level of the other tile is strictly smaller than
+	    		//the level of this tile the situation is opposite
+	    		//
+	    		if (s1 < r0) {
+	    			return -1;
+	    		} else {
+	    			return 1;
+	    		}	    		
+	    	} else { //the levels are equal
+	    		if (this.xmin > other.xmin) {
+	    			return 1;
+	    		} else if (this.xmin < other.xmin) {
+	    			return -1;
+	    		} else {
+	    			return 0;
+	    		}    		
 	    	}
-	    	if (d1 - c0 < d0 - c1) { //light in the northwest direction
-	    		//from lower left corner of this tile must intersect the other tile
-	    		if (s1 <= r0) {
-	    			return -1;
-	    		} else {
-	    			return 1;
-	    		}	    		
-	    	}	    	
-	    	return 0;
 	    }
 
 	    /**
@@ -216,16 +237,23 @@ import edu.princeton.cs.algs4.Draw;
 	    	}
 	    }
 	    
-	    
+	    /*
+	     * Draws this tile to a given window, color filled and with level mark
+	     */
 	    public void drawFilled(Draw dr) {
 			if (type == 1) { //horizontal tile
 				dr.setPenColor(Draw.BOOK_RED);
 				dr.filledRectangle((xmin + xmax)/2, (ymin + ymax)/2,
 						(- xmin + xmax)/2, (- ymin + ymax)/2);
+				dr.setPenColor(Draw.BLACK);
+				dr.text((xmin + xmax)/2, (ymin + ymax)/2 - 0.25, String.valueOf(level));
+				//StdOut.println(String.valueOf(xmin + ymin));
 			} else if (type == 0) { // vertical tile
 				dr.setPenColor(Draw.BOOK_LIGHT_BLUE);
 				dr.filledRectangle((xmin + xmax)/2, (ymin + ymax)/2,
 						(- xmin + xmax)/2, (- ymin + ymax)/2);
+				dr.setPenColor(Draw.BLACK);
+				dr.text((xmin + xmax)/2 + 0.25, (ymin + ymax)/2, String.valueOf(level));
 			} else if (type == 2){ // Bukva g 
 				dr.setPenColor(Draw.GREEN);
 				dr.filledRectangle((3 * xmin + xmax)/4, (3 * ymin + ymax)/4,
@@ -234,6 +262,8 @@ import edu.princeton.cs.algs4.Draw;
 						(- xmin + xmax)/4, (- ymin + ymax)/4);
 				dr.filledRectangle((xmin + 3 * xmax)/4, (ymin + 3 * ymax)/4,
 						(- xmin + xmax)/4, (- ymin + ymax)/4);
+				dr.setPenColor(Draw.BLACK);
+				dr.text((xmin + xmax)/2 + 0.25, (ymin + ymax)/2 + 0.25, String.valueOf(level));
 			} else { // mirrored L
 				dr.setPenColor(Draw.YELLOW);
 				dr.filledRectangle((3 * xmin + xmax)/4, (3 * ymin + ymax)/4,
@@ -242,6 +272,8 @@ import edu.princeton.cs.algs4.Draw;
 						(- xmin + xmax)/4, (- ymin + ymax)/4);
 				dr.filledRectangle((xmin + 3 * xmax)/4, (ymin + 3 * ymax)/4,
 						(- xmin + xmax)/4, (- ymin + ymax)/4);
+				dr.setPenColor(Draw.BLACK);
+				dr.text((xmin + xmax)/2 + 0.25, (ymin + ymax)/2 + 0.25, String.valueOf(level));
 				
 			}
 			dr.setPenColor(Draw.BLACK);

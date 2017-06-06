@@ -3,6 +3,7 @@ import java.util.ArrayList;
 //import edu.princeton.cs.algs4.Graph;
 import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.In;
 
 /*
  * This class describes a tiling on an N-by-M rectangle
@@ -11,13 +12,30 @@ public class RibTiling {
 	public HashSet<RibTile> tiling;
 	public int N; //height of the rectangle
 	public int M; //width of the rectangle
-//	private SheffieldGraph G; // TO DO: this will be a digraph associated with the tiling by
-	                 // Sheffield's bijection. 
 	public Height height; //this is the height function on this tiling
+	
+	/*
+	 * This Constructor reads the tiling from a stream input.
+	 * The input file has N and M as the first two entries followed by the triples
+	 * of (xmin, ymin, type) for all tiles in the tiling.
+	 * I don't do any error checking here.
+	 */
+	public RibTiling(In in) {
+		tiling = new HashSet<RibTile>();
+		N = in.readInt();
+		M = in.readInt();
+		int numberTiles = N * M / 3;
+		for (int i = 0; i < numberTiles; i++) {
+			int xmin = in.readInt();
+			int ymin = in.readInt();
+			int type = in.readInt();
+			tiling.add(new RibTile(xmin,ymin,type));
+		}
+	}
 	
 	
 	/*
-	 * Constructor create tiling on an N-by-M board. There are several possible initializations,
+	 * This Constructor create tiling on an N-by-M board. There are several possible initializations,
 	 * which are chosen according to type variable
 	 */
 	public RibTiling(int N, int M, int type) {
@@ -130,6 +148,20 @@ public class RibTiling {
 						}			
 		}
 	} //end of constructor.
+	/*
+	 * Copy constructor
+	 */
+	public RibTiling(RibTiling tlng) {
+		this.N = tlng.N;
+		this.M = tlng.M;
+		//we are not going to copy height. It can be recomputed if needed.
+		RibTile tile;
+		tiling = new HashSet<RibTile>();
+		for (RibTile t : tlng.tiling){
+			tile = new RibTile(t);
+			tiling.add(tile);
+		}		
+	}
 	public void draw(Draw dr) { //displays the tiling in a specified window
 		for (RibTile tile : tiling) {
 			tile.drawFilled(dr);
@@ -217,7 +249,7 @@ public class RibTiling {
     /*
      *   checks if tiles tile1 and tile2 can be flipped.
      */
-    private Boolean isFlip(RibTile tile1, RibTile tile2) {
+    public Boolean isFlip(RibTile tile1, RibTile tile2) {
     	RibTile otile1, otile2;
     	// first we order tiles by their xmin parameter.
     	if (tile1.xmin > tile2.xmin) {
