@@ -201,12 +201,21 @@ public class RibTiling {
     	// otherwise
     	return true;
     }
-    /*
+    
+    //flip a pair of ordered tiles. So it is assumed that tile1 < 
+    
+    
+    
+    /**
      *flips two tiles which are already known to be flippable. 
+     *[If they are unflippable then the function returns unchanged pair (tile1, tile2).]
+     *The function returns a pair of tiles t1 and t2.
+     *If we had tile1 < tile2 (tile1 on the left of tile2), then we will have t2 < t1.
      */    
     public void flip(RibTile tile1, RibTile tile2) { 
+    	Pair<RibTile, RibTile> pair;
     	if (tile1.type == 0 && tile2.type == 0) { // two vertical tiles
-    		flip2verticalTiles(tile1, tile2);
+    		  flip2verticalTiles(tile1, tile2);
     		} 
     	else if (tile1.type == 1 & tile2.type == 1) {  //two horizontal tiles
     		flip2horizontalTiles(tile1, tile2);
@@ -227,7 +236,9 @@ public class RibTiling {
        			|| (tile1.type == 2 && tile2.type == 1)){ // horizontal and Gamma   
       	    flipHorizontalGamma(tile1, tile2);	
        	}
-    	tiling.remove(tile1);
+    	tiling.remove(tile1); //Perhaps these lines are not needed, since we assume that the tile is
+    	                        //uniquely identified by its xmin and ymin pair. 
+    	                        // However, I cannot make it work without these lines
     	tiling.remove(tile2);
     }
     /*
@@ -236,6 +247,7 @@ public class RibTiling {
      */
     public int randomFlip(double x, double y, double s) {
     	RibTile tile = findTile(x, y);
+    	StdOut.println(tile);
     	ArrayList<RibTile> otherTiles = findFlips(tile);
     	if (!otherTiles.isEmpty()) {
     		int K = otherTiles.size();//number of flippable tiles
@@ -311,10 +323,10 @@ public class RibTiling {
     	}  	
     	return false;
     }
-    /*
+    /**
      * Finds all possible flips that involve a given tile.
      */  
-    private ArrayList<RibTile> findFlips(RibTile tile) {
+    public ArrayList<RibTile> findFlips(RibTile tile) {
     	ArrayList<RibTile> flips = new ArrayList<RibTile>();
     	RibTile other = null;
     	//
@@ -572,3 +584,5 @@ public class RibTiling {
         tiling.add(new RibTile(xmin + 1, ymin + 1, 2));  
   }
 }
+
+

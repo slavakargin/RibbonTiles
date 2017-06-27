@@ -11,7 +11,7 @@ public class RibTileVisualizer {
 	public SheffieldGraph G;
 	static Scanner sc = new Scanner(System.in);
 
-	/*
+	/**
 	 * Construct a random tiling of an N-by-M rectangle
 	 */
 	public RibTileVisualizer(int N, int M, int type) {
@@ -23,7 +23,7 @@ public class RibTileVisualizer {
 		tiling = new RibTiling(N,M,type); //initiate a type 5 tiling 
 	}
 
-	/*
+	/**
 	 * Reads the tiling from the input stream (from a file)
 	 */
 	public RibTileVisualizer(In in) {
@@ -37,20 +37,22 @@ public class RibTileVisualizer {
 		dr.show(40);
 	}
 
-	/*
+	/**
 	 * computes Sheffield's digraph for a tiling.
 	 */
 	public void computeSheffieldGraph(RibTiling tlng) {
 		G = new SheffieldGraph(tlng);
 	}
-
+	
+    /*******************
+     * MAIN 
+     */
 
 	public static void main(String[] args) {
 		RibTileVisualizer vz;
 		//Generate or load a tiling
 		StdOut.println("If you want to enter tiling from a file print 'File',");
 		StdOut.println("otherwize press Enter.");
-		//Scanner sc = new Scanner(System.in);
 		String option = sc.nextLine();
 		if (option.equals("File")) {
 			StdOut.println("Enter file name: ");
@@ -61,14 +63,13 @@ public class RibTileVisualizer {
 			vz.N = vz.tiling.N;
 			vz.M = vz.tiling.M;
 		} else {
-			int N = 12; //height of the rectangle to tile
-			int M = 10; //width
-			int type = 5; //type of initial tiling
+			int N = 10; //height of the rectangle to tile
+			int M = 12; //width
+			int type = 4; //type of initial tiling
 			vz = new RibTileVisualizer(N, M, type); 
 			vz.N = N;
 			vz.M = M;
 		}
-		//sc.close();
 
 		//Setting up the window for the tiling
 		Draw draw1 = new Draw("Tiling before Flip");
@@ -85,23 +86,18 @@ public class RibTileVisualizer {
 		//of the flip
 		int success; //equals 1 if the flip was successful
 		if (!option.equals("File")) {
-			int ITER = 100; // number of random flips
+			int ITER = 10; // number of random flips
 			for (int k = 0; k < ITER; k++) {
 				x = StdRandom.uniform(0.,(double) vz.M);
 				y = StdRandom.uniform(0.,(double) vz.N);
 				s = StdRandom.uniform(0.,1.);
 				success = vz.tiling.randomFlip(x, y, s);
-				//vz.computeSheffieldGraph(vz.tiling);
-				//vz.G.reduce();
-				//if (!vz.G.isStandardPathProperty()) break;
 			}
 		}
 		vz.tilingCopy = new RibTiling(vz.tiling); //make a copy in case we want to reset.
         
 		vz.draw(draw1);	//drawing the tiling
 		vz.computeSheffieldGraph(vz.tiling);
-	    //vz.G.reduceStep(sc);  //compute the cover graph for the Sheffield Graph (debug version)
-		//vz.G.strongReduce(); //compute a spanning branching
 		vz.G.reduce();  //compute the cover graph for the Sheffield Graph 
 		vz.G.draw(draw1); //draw the cover graph
 
@@ -138,7 +134,6 @@ public class RibTileVisualizer {
 				vz.tiling = new RibTiling(vz.tilingCopy);
 				vz.tiling.draw(draw2);
 				vz.computeSheffieldGraph(vz.tiling);
-				//vz.G.strongReduce();
 				vz.G.reduce();  //compute the cover graph
 				vz.G.draw(draw2); //draw the graph
 				while (draw2.mousePressed()) {
@@ -174,7 +169,6 @@ public class RibTileVisualizer {
 				vz.tiling.flip(t1, t2);
 				vz.draw(draw2);	//drawing the tiling
 				vz.computeSheffieldGraph(vz.tiling);
-				//vz.G.strongReduce();
 				vz.G.reduce();  //compute the cover graph
 				vz.G.draw(draw2); //draw the graph
 			} else {

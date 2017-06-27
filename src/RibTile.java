@@ -25,6 +25,8 @@ import edu.princeton.cs.algs4.Draw;
         // 2  _  (Russian G)
         //   |
         // 3   _|
+	    public int typeCode; // a more formal code for the type. 0 if a square in the tile goes  left, 1 if it goes up
+	    // So type vertical 0 -> "11" = 3, horizontal 1 -> "00" = 0, Russian G 2 -> "10" = 2, and reflected L 3 -> "01" = 1
 	    public long level;
         public final int n = 3;
 	    /**
@@ -41,15 +43,19 @@ import edu.princeton.cs.algs4.Draw;
 	        switch (type) {
 	        case 0: this.xmax = xmin + 1;
 	                this.ymax = ymin + 3;
+	                typeCode = 3;
 	                break;
 	        case 1: this.xmax = xmin + 3;
                     this.ymax = ymin + 1;
+                    typeCode = 0;
                     break;
 	        case 2: this.xmax = xmin + 2;
                     this.ymax = ymin + 2;
+                    typeCode = 2;
                     break;
 	        case 3: this.xmax = xmin + 2;
                     this.ymax = ymin + 2;
+                    typeCode = 1;
                     break;
 	        }
 	        level = Math.round(xmin + ymin);
@@ -63,6 +69,7 @@ import edu.princeton.cs.algs4.Draw;
 	    	this.xmax = tile.xmax;
 	    	this.ymax = tile.ymax;
 	    	this.type = tile.type;
+	    	this.typeCode = tile.typeCode;
 	    	this.level = tile.level;
 	    }
 	    
@@ -165,7 +172,8 @@ import edu.princeton.cs.algs4.Draw;
 	    }
 
 	    /**
-	     * Compares this tile to the specified tile and returns true if they are the same
+	     * Compares this tile to the specified tile and returns true if they are the same,
+	     * which happens only if this.xmin = other.xmin, this.ymin = other.ymin, and this.type = other.type
 	     *
 	     * @param  other the other tile
 	     * @return {@code true} if this tile equals {@code other};
@@ -179,24 +187,24 @@ import edu.princeton.cs.algs4.Draw;
 	        RibTile that = (RibTile) other;
 	        if (this.xmin != that.xmin) return false;
 	        if (this.ymin != that.ymin) return false;
-	        if (this.xmax != that.xmax) return false;
-	        if (this.ymax != that.ymax) return false;
+	       /* if (this.xmax != that.xmax) return false;
+	        if (this.ymax != that.ymax) return false; */
 	        if (this.type != that.type) return false;
 	        return true;
 	    }
 
 	    /**
-	     * Returns an integer hash code for this tile.
+	     * Returns an integer hash code for this tile. The hash code depends only on xmin and ymin
 	     * @return an integer hash code for this tile
 	     */
 	    @Override
 	    public int hashCode() {
 	        int hash1 = ((Double) xmin).hashCode();
 	        int hash2 = ((Double) ymin).hashCode();
-	        int hash3 = ((Double) xmax).hashCode();
-	        int hash4 = ((Double) ymax).hashCode();
-	        int hash5 = ((Integer) type).hashCode();
-	        return 31*(31*(31*(31*hash1 + hash2) + hash3) + hash4) + hash5;
+	       /* int hash3 = ((Double) xmax).hashCode();
+	        int hash4 = ((Double) ymax).hashCode(); */
+	        int hash5 = ((Integer) type).hashCode(); 
+	        return 1299721 * (1299721 * hash1 + hash2) + hash5;
 	    }
 
 	    /**
