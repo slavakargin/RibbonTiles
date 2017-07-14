@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.Out;
 
 /*
  * This class describes a tiling on an N-by-M rectangle
@@ -12,7 +13,8 @@ public class RibTiling {
 	public HashSet<RibTile> tiling;
 	public int N; //height of the rectangle
 	public int M; //width of the rectangle
-	public Height height; //this is the height function on this tiling
+	//public Height height; //this is the height function on this tiling (I do not use it anymore)
+	private int n = 3;
 	
 	/*
 	 * This Constructor reads the tiling from a stream input.
@@ -52,7 +54,7 @@ public class RibTiling {
 		this.N = N; 
 		this.M = M;
 		tiling = new HashSet<RibTile>();
-		height = new Height(N, M);
+		//height = new Height(N, M);
 		
 		if (type == 0) {
 			for (int i = 0; i < M; i++) {
@@ -168,21 +170,17 @@ public class RibTiling {
 		}
 	}
 
-	/*
+	/*I DON'T USE THE FUNCTION BELOW
 	 * Calculates height vector function on the rectangle that corresponds to this 
 	 * tiling.
 	 */
+	/*
 	public void calcHeight() {
 		height.calcHeight(this);
 	}
-    /*
-    //Checks if a tile belongs to this tiling
-     * 
-     */
-    public Boolean contains(RibTile tile) {
-    	return tiling.contains(tile);
-    }
-    /*
+	*/
+
+    /**
      * Prints out all tiles in the tiling
      */
     public void print() {
@@ -191,8 +189,29 @@ public class RibTiling {
     		StdOut.println();
     	}
     }
-    /*
-     * Checks validity of the tiling
+    
+    /**
+     * Save the tiling to a file, so that it can be read in by one of the constructors.
+     * 
+     * @param f is the name of the file
+     */
+    public void save(String f) {
+    	Out out;
+        out = new Out(f);
+        out.println(N + " " + M);
+        for (RibTile t : tiling) {
+        	out.println((int) t.xmin + " " + (int) t.ymin + " " + t.type);
+        }
+        out.close();
+    }
+    
+    
+    
+    
+    
+    /**
+     * Checks validity of the tiling (Some necessary but not sufficient property, so
+     * the tiling may still be invalid even if this functions outputs true.)
      */
     public Boolean isValid() {
     	for (RibTile tile : tiling) {
@@ -202,126 +221,150 @@ public class RibTiling {
     	return true;
     }
     
-    //flip a pair of ordered tiles. So it is assumed that tile1 < 
-    
-    
-    
-    /**
-     *flips two tiles which are already known to be flippable. 
-     *[If they are unflippable then the function returns unchanged pair (tile1, tile2).]
-     *The function returns a pair of tiles t1 and t2.
-     *If we had tile1 < tile2 (tile1 on the left of tile2), then we will have t2 < t1.
-     */    
-    public void flip(RibTile tile1, RibTile tile2) { 
-    	Pair<RibTile, RibTile> pair;
-    	if (tile1.type == 0 && tile2.type == 0) { // two vertical tiles
-    		  flip2verticalTiles(tile1, tile2);
-    		} 
-    	else if (tile1.type == 1 & tile2.type == 1) {  //two horizontal tiles
-    		flip2horizontalTiles(tile1, tile2);
-	        
-       	} else if ((tile1.type == 2 && tile2.type == 3)
-       			|| (tile1.type == 3 && tile2.type == 2)){ //We have Gamma and mirrored L. 
-       		flipGammaL(tile1, tile2);       		
-       	} else if ((tile1.type == 0 && tile2.type == 2)
-       			|| (tile1.type == 2 && tile2.type == 0)){ // vertical and Gamma   
-       		flipVerticalGamma(tile1, tile2);
-       	} else if ((tile1.type == 0 && tile2.type == 3)
-       			|| (tile1.type == 3 && tile2.type == 0)){ // vertical and mirrored L   
-      	    flipVerticalL(tile1, tile2);	
-       	} else if ((tile1.type == 1 && tile2.type == 3)
-       			|| (tile1.type == 3 && tile2.type == 1)){ // horizontal and mirrored L   
-       		flipHorizontalL(tile1, tile2);
-       	} else if ((tile1.type == 1 && tile2.type == 2)
-       			|| (tile1.type == 2 && tile2.type == 1)){ // horizontal and Gamma   
-      	    flipHorizontalGamma(tile1, tile2);	
-       	}
-    	tiling.remove(tile1); //Perhaps these lines are not needed, since we assume that the tile is
-    	                        //uniquely identified by its xmin and ymin pair. 
-    	                        // However, I cannot make it work without these lines
-    	tiling.remove(tile2);
-    }
     /*
+    //Checks if a tile belongs to this tiling
+     * 
+     */
+    public Boolean contains(RibTile tile) {
+    	return tiling.contains(tile);
+    }
+    
+    //flip a pair of ordered tiles. So it is assumed that the pair is flippable.
+    //Besides, we are going to use typeCode instead of type.
+    public Pair<RibTile,RibTile> flipGeneric(RibTile tile1, RibTile tile2) {
+    	RibTile otile1, otile2, ntile1, ntile2;
+    	Pair<RibTile, RibTile> pair;
+    	//First, we order the tiles.
+    	boolean flag = true;
+    	if (tile1.compareWeak(tile2) == 1) { //tile2 was on the left of tile1 
+    		otile1 = tile2;
+    		otile2 = tile1;
+    		flag = false; //we changed the order of tiles.
+    	} else if (tile1.compareWeak(tile2) == -1) { //tile1 is on the left of tile2
+    		otile1 = tile1;
+    		otile2 = tile2;
+    	} else {
+    		StdOut.println("tiles are not comparable.");
+    		return null; //tiles are not comparable.
+    	}
+    	//after the swap, otile2 will be on the left of tile otile1
+    	//calculate offset. 
+    	int a = (int) (otile1.xmin - otile2.xmin);
+    	int b = (int) (otile1.ymin - otile2.ymin);
+    	
+    	if (a >= 0 && b > 0) {
+    		String tc1 = Integer.toBinaryString(otile1.typeCode |= (1 << (n - a - b - 1))); // set the bit
+    		String tc2 = Integer.toBinaryString(otile2.typeCode |= (1 << (a + b - 1))); // set the bit
+    		//StdOut.println(tc1);
+    		ntile1 = new RibTile(otile1.xmin + 1, otile1.ymin - 1, tc1);
+    		ntile2 = new RibTile(otile2.xmin, otile2.ymin, tc2);
+    	} else {
+    		a = - a;
+    		b = - b;
+    		String tc1 = Integer.toBinaryString(otile1.typeCode &= ~(1 << (a + b - 1))); // unset the bit
+    		String tc2 = Integer.toBinaryString(otile2.typeCode &= ~(1 << (n - 1 - a - b))); // unset the bit
+    		ntile1 = new RibTile(otile1.xmin, otile1.ymin, tc1);
+    		ntile2 = new RibTile(otile2.xmin - 1, otile2.ymin + 1, tc2);
+    	}
+        tiling.add(ntile1);
+        tiling.add(ntile2);
+        tiling.remove(otile1);
+        tiling.remove(otile2);
+        
+        if (flag) {
+        	pair = new Pair<RibTile, RibTile>(ntile1, ntile2);
+        } else {
+        	pair = new Pair<RibTile, RibTile>(ntile2, ntile1);
+        }
+        
+        return pair;
+    }
+    
+    
+    
+  
+    /**
      * performs a random flip, if possible. Needs a point and a random number between 0 and 1
      * returns 1 if a flip is found and 0 otherwise
      */
     public int randomFlip(double x, double y, double s) {
     	RibTile tile = findTile(x, y);
-    	StdOut.println(tile);
     	ArrayList<RibTile> otherTiles = findFlips(tile);
     	if (!otherTiles.isEmpty()) {
     		int K = otherTiles.size();//number of flippable tiles
     		int n = (int) (s * K); //we choose tile number n
     		RibTile otherTile = otherTiles.get(n);
-    		flip(tile, otherTile);
+    		flipGeneric(tile, otherTile);
     		return 1;
     	}
     	return 0;
     }
-    /*
+    /**
      *   checks if tiles tile1 and tile2 can be flipped.
      */
     public Boolean isFlip(RibTile tile1, RibTile tile2) {
     	RibTile otile1, otile2;
-    	// first we order tiles by their xmin parameter.
-    	if (tile1.xmin > tile2.xmin) {
+    	//First, we order the tiles.
+    	if (tile1.compareWeak(tile2) == 1) {
     		otile1 = tile2;
     		otile2 = tile1;
-    	} else {
+    	} else if (tile1.compareWeak(tile2) == -1) {
     		otile1 = tile1;
     		otile2 = tile2;
+    	} else {
+    		return false; //tiles are not comparable.
     	}
-    	if (otile1.type == 0 && otile2.type == 0) { //vertical tiles
-    		if (otile1.ymin == otile2.ymin && otile1.xmin == otile2.xmin - 1) { //two vertical tiles are next to each
-    			return true;
-    		} else if (otile2.ymin == otile1.ymin + 1 && otile2.xmin == otile1.xmin + 1) {//two vertical tiles are next to 
-    			                                                                          //each other and shifted by 1
-    			return true;
-    		} 
-    	} else if (otile1.type == 1 && otile2.type == 1){ //horizontal tiles
-    		if (otile1.xmin == otile2.xmin &&
-    				(otile1.ymin == otile2.ymin - 1 || otile2.ymin == otile1.ymin - 1)) {
-    			return true; 
-    		} else if (otile1.xmin == otile2.xmin - 1 &&
-    		          otile1.ymin == otile2.ymin - 1) {
-    			return true;
+    	//calculate offset. 
+    	int a = (int) (otile1.xmin - otile2.xmin);
+    	int b = (int) (otile1.ymin - otile2.ymin);
+    	
+    	if (a >= 0 && b > 0) {
+    		if (a + b > n - 1) {
+    			//StdOut.println("Offset is too large.");
+    			return false;
+    		} else {
+    			int checksum = 0;
+    			for (int i = 0; i < a + b - 1; i++) {
+    				checksum =+ ((otile2.typeCode >> i) & 1);
+    			}
+    			if (checksum != b - 1 || (((otile2.typeCode >> a + b - 1) & 1) != 0) 
+    					|| (((otile1.typeCode >> (n - a - b - 1)) & 1) != 0)) {
+    				return false;
+    			} else if (a + b + 1 < n) {
+    				for (int k = 0; k < n - (a + b + 1); k++) {
+    					if (((otile2.typeCode >> a + b + k) & 1) != ((otile1.typeCode >> k) & 1)) {
+    						//StdOut.println("Sequences are not aligned.");
+    						return false;
+    					}
+    				}  				
+    			}
     		}
-    	} else  if (otile1.type == 2 && otile2.type == 3){ //Gamma and mirrored L tiles
-    		if (otile1.xmin == otile2.xmin &&
-    				(otile1.ymin == otile2.ymin + 1 || otile1.ymin == otile2.ymin - 2)) {
-    			return true;
-    		} else if (otile1.xmin == otile2.xmin - 1 && otile1.ymin == otile2.ymin) {
-    			return true;
-    		}    		
-    	} else if (otile1.type == 3 && otile2.type == 2) { //Mirrored L and Gamma tiles
-    		if (otile1.xmin == otile2.xmin && 
-    				(otile1.ymin == otile2.ymin - 1 || otile1.ymin == otile2.ymin + 2)) {
-    			return true;
-    		} else if (otile1.xmin == otile2.xmin - 2 && otile1.ymin == otile2.ymin) {
-    			return true;
+    		return true;
+    	} else if (a < 0 && b <= 0) {
+    		a = - a; 
+    		b = - b;
+    		if (a + b > n - 1) {
+    			//StdOut.println("Offset is too large.");
+    			return false;
+    		} else {
+    			int checksum = 0;
+    			for (int i = 0; i < a + b - 1; i++) {
+    				checksum =+ ((otile1.typeCode >> i) & 1);
+    			}
+    			if (checksum != b || (((otile1.typeCode >> a + b - 1) & 1) != 1) 
+    					|| (((otile2.typeCode >> (n - (a + b + 1)) & 1) != 1))) {
+    				return false;
+    			} else if (a + b + 1 < n) {
+    				for (int k = 0; k < n - (a + b + 1); k++) {
+    					if (((otile1.typeCode >> a + b + k) & 1) != ((otile2.typeCode >> k) & 1)) {
+    						return false;
+    					}
+    				}  				
+    			}
     		}
-    	} else if (otile1.type == 0 && otile2.type == 2) { //Vertical and Gamma 
-    		if (otile1.xmin == otile2.xmin - 1 && otile1.ymin == otile2.ymin - 1) {
-    			return true;
-    		}
-    	} else if (otile1.type == 3 && otile2.type == 0) { //Mirrored L and vertical
-    		if (otile1.xmin == otile2.xmin - 2 && otile1.ymin == otile2.ymin) {
-    			return true;
-    		}
-    	} else if (otile1.type == 1 && otile2.type == 2) { //Horizontal and Gamma
-    		if (otile1.xmin == otile2.xmin && otile1.ymin == otile2.ymin + 2) {
-    			return true;
-    		}
-    	} else if (otile1.type == 2 && otile2.type == 1) { //Gamma and Horizontal
-    		if (otile1.xmin == otile2.xmin && otile1.ymin == otile2.ymin - 2) {
-    			return true;
-    		}
-    	} else if (otile1.type == 1 && otile2.type == 3) { // Horizontal and mirrored L
-    		if (otile1.xmin == otile2.xmin - 1 && otile1.ymin == otile2.ymin - 1) {
-    			return true;
-    		}
-    	}  	
-    	return false;
+    		return true;
+    	}
+    	return false;	
     }
     /**
      * Finds all possible flips that involve a given tile.
@@ -329,6 +372,7 @@ public class RibTiling {
     public ArrayList<RibTile> findFlips(RibTile tile) {
     	ArrayList<RibTile> flips = new ArrayList<RibTile>();
     	RibTile other = null;
+    	//StdOut.println("Tile ymin is " + tile.ymin);
     	//
     	// Looking above the given tile:
     	//
@@ -350,15 +394,17 @@ public class RibTiling {
     	// Looking below the given tile
     	//
     	switch (tile.type) { 
-		case 1:
+		case 1: //horizontal
 			other = findTile(tile.xmin + 1.5, tile.ymin - 0.5);
 			break;
-		case 2: 
-			other = findTile(tile.xmin + 1.5, tile.ymin - 1.5);
+		case 2: //Gamma
+			other = findTile(tile.xmin + 1.5, tile.ymin + 0.5);
+			//StdOut.println("Point has x = " + (tile.xmin + 1.5) + " and y = " + ( tile.ymin - 1.5) );
 			break;
 		case 3: //mirrored L tile
 			other = findTile(tile.xmin + 1.5, tile.ymin - 0.5);
 	    } 
+    	//StdOut.println("Below is " + other);
 	    if (other != null && isFlip(tile, other)){
 		  flips.add(other);
 	    }
@@ -399,190 +445,76 @@ public class RibTiling {
      */
 	public RibTile findTile(double x, double y) { 
 		RibTile tile;
+		double x0 = Math.floor(x);
+		double y0 = Math.floor(y);
+		//StdOut.println("x = " + x + "and y = " + y);
 		for (int i = 0; i < 3; i++ ) { //checking horizontal tiles
-			tile = new RibTile((int) x - i, (int) y, 1);
+			tile = new RibTile(x0 - i, y0, 1);
 			if (tiling.contains(tile)) return tile;
 		}
 		for (int i = 0; i < 3; i++ ) { //checking vertical tiles
-			tile = new RibTile((int) x, (int) y - i, 0);
+			tile = new RibTile(x0, y0 - i, 0);
 			if (tiling.contains(tile)) return tile;
 		}
 		//checking Gammas
-	    tile = new RibTile((int) x, (int) y, 2);
+	    tile = new RibTile(x0, y0, 2);
 			  if (tiling.contains(tile)) return tile;
-	    tile = new RibTile((int) x, (int) y - 1, 2);
+	    tile = new RibTile(x0, y0 - 1, 2);
 			  if (tiling.contains(tile)) return tile;	
-	    tile = new RibTile((int) x - 1, (int) y - 1, 2);
+	    tile = new RibTile(x0 - 1, y0 - 1, 2);
 			  if (tiling.contains(tile)) return tile;	
+			  
 		//checking mirrored L's 
-		tile = new RibTile((int) x, (int) y, 3);
+		tile = new RibTile(x0, y0, 3);
 			  if (tiling.contains(tile)) return tile;
-		tile = new RibTile((int) x - 1, (int) y, 3);
+		tile = new RibTile(x0 - 1, y0, 3);
 			  if (tiling.contains(tile)) return tile;	
-		tile = new RibTile((int) x - 1, (int) y - 1, 3);
+		tile = new RibTile(x0 - 1, y0 - 1, 3);
 			  if (tiling.contains(tile)) return tile;		  			  
-	    /*StdOut.println("have not found tile covering the point (" + x 
-				+ ", " + y + ")." );
-		for (RibTile t : tiling) {
-			StdOut.println(t);
-		}*/
 		return null;
 	}
-    
-  /*
-   * flips two vertical tiles which are already known to be flippable.
-   */
-    private void flip2verticalTiles(RibTile tile1, RibTile tile2) {
-    	double xmin, ymin, ymax;
-	if (tile1.xmin < tile2.xmin) { // the first tile on the left
-       	xmin = tile1.xmin;
-        ymin = tile1.ymin;
-        ymax = tile2.ymax;
-	} else { //the second tile is on the left
-       	xmin = tile2.xmin;
-        ymin = tile2.ymin;
-        ymax = tile1.ymax;
+	/**
+	 * finds the tiles between two comparable files, that is tiles x such that
+	 * t1 <--- x <---- t2 and x intersects level c.
+	 * 
+	 * 
+	 * @param t1 a ribbon tile
+	 * @param t2 a ribbon tile comparable to t1
+	 * @param l a double, the level that the in-between tiles must intersect
+	 * @return tiles which are tiles between t1 and t2
+	 */
+	public ArrayList<RibTile> findBetween(RibTile t1, RibTile t2) {
+		ArrayList<RibTile> tiles = new ArrayList<RibTile>();
+		long a, b;
+		if (t1.level < t2.level) {
+			a = t1.level;
+			b = t2.level;
+		} else {
+			a = t2.level;
+			b = t1.level;
+		}
+		for (RibTile x : tiling) {
+			if (x.level >= b - n && x.level <= a + n){ //tile x intersects the line with level l
+				if (((x.compareWeak(t1) == -1) && (x.compareWeak(t2) == 1)) 
+						|| ((x.compareWeak(t1) == 1) && (x.compareWeak(t2) == -1))) { 
+					//x is between t1 and t2
+					tiles.add(x);					
+				}
+			}
+		}
+		return tiles;
 	}
-    if (tile1.ymin == tile2.ymin) { 
-        tiling.add(new RibTile(xmin, ymin, 3));
-        tiling.add(new RibTile(xmin, ymin + 1, 2));
-	} else {
-        tiling.add(new RibTile(xmin, ymax - 2, 3));
-        tiling.add(new RibTile(xmin, ymin, 2));
+	
+	/**
+	 * Count number of tiles of order type x 
+	 */
+	public int countTiles(int x) {
+		int nT = 0;
+		for (RibTile t : tiling) {
+			if (t.typeCode == x) nT++; 
 		}
-    }
-    /*
-     * flips two horizontal tiles which are already known to be flippable.
-     */
-  private void flip2horizontalTiles(RibTile tile1, RibTile tile2) {
-    	double xmin, ymin;
-    if (tile1.ymin < tile2.ymin) { // the first tile on the bottom
-       	xmin = tile1.xmin;
-        ymin = tile1.ymin;
-	} else { //the second tile is on the bottom
-       	xmin = tile2.xmin;
-        ymin = tile2.ymin;
+		return nT;
 	}
-    if (tile1.xmin == tile2.xmin) { //the tiles exactly aligned
-        tiling.add(new RibTile(xmin, ymin, 2));
-        tiling.add(new RibTile(xmin + 1, ymin, 3));
-	} else { // the tiles are shifted
-        tiling.add(new RibTile(xmin, ymin, 3));
-        tiling.add(new RibTile(xmin + 2, ymin, 2));
-	} 
-   }
-  /*
-   * flips two tiles which are already known to be flippable.
-   * One of them is assumed to look like Gamma (or Russian G) and another as a mirrored L.
-   */
-  private void flipGammaL(RibTile tile1, RibTile tile2) {
-  	double xmin, ymin;
-  	if  (tile1.xmax == tile2.xmax && 
-				(tile1.ymax - tile2.ymin == 3 || tile2.ymax - tile1.ymin == 3)) { // 3-by-2 vertical brick
-		if (tile1.ymin < tile2.ymin) {
-	       	ymin = tile1.ymin;
-		} else {
-	        ymin = tile2.ymin;
-		}
-        xmin = tile1.xmin;
-        tiling.add(new RibTile(xmin, ymin, 0));
-        tiling.add(new RibTile(xmin + 1, ymin, 0)); 
-		} else if (tile1.ymax == tile2.ymax && 
-				(tile1.xmax - tile2.xmin == 3 || tile2.xmax - tile1.xmin == 3)) { // 3-by-2 horizontal brick // 2-by-3 arrangement
-		if (tile1.xmin < tile2.xmin) {
-	       	xmin = tile1.xmin;
-		} else {
-	        xmin = tile2.xmin;
-		}
-        ymin = tile1.ymin;
-        tiling.add(new RibTile(xmin, ymin, 1));
-        tiling.add(new RibTile(xmin, ymin + 1, 1));
-		} else if (tile1.xmax == tile2.xmax && 
-				(tile1.ymax - tile2.ymin == 0 || tile2.ymax - tile1.ymin == 0)) { // convertible two 2 vertical tiles)
-		if (tile1.ymin < tile2.ymin) {
-	       	ymin = tile1.ymin;
-		} else {
-	        ymin = tile2.ymin;
-		}
-        xmin = tile1.xmin;
-        tiling.add(new RibTile(xmin, ymin, 0));
-        tiling.add(new RibTile(xmin + 1, ymin + 1, 0));
-		} else if (tile1.ymax == tile2.ymax && 
-				(tile1.xmax - tile2.xmin == 0 || tile2.xmax - tile1.xmin == 0)) { // convertible two 2 horizontal tiles)
-			if (tile1.xmin < tile2.xmin) {
-	       	xmin = tile1.xmin;
-		} else {
-	        xmin = tile2.xmin;
-		}
-        ymin = tile1.ymin;
-        tiling.add(new RibTile(xmin, ymin, 1));
-        tiling.add(new RibTile(xmin + 1, ymin + 1, 1));
-		}
-    }
-  /*
-   * flips two tiles which are already known to be flippable.
-   * One of them is assumed to look like Gamma (or Russian G) and another is vertical.
-   */
-  private void flipVerticalGamma(RibTile tile1, RibTile tile2) {
-	   double xmin, ymin;
-		if (tile1.type == 0) {
-   			xmin = tile1.xmin;
-   			ymin = tile1.ymin;
-   		} else {
-   			xmin = tile2.xmin;
-   			ymin = tile2.ymin;
-   		}
-        tiling.add(new RibTile(xmin, ymin, 2));
-        tiling.add(new RibTile(xmin, ymin + 2, 1));
-  }
-  /*
-   * flips two tiles which are already known to be flippable.
-   * One of them is vertical and another is a mirrored L.
-   */
-  private void flipVerticalL(RibTile tile1, RibTile tile2) {
-	   double xmin, ymin;
-		if (tile1.type == 0) {
-   			xmin = tile2.xmin;
-   			ymin = tile2.ymin;
-   		} else {
-   			xmin = tile1.xmin;
-   			ymin = tile1.ymin;
-   		}
-        tiling.add(new RibTile(xmin + 1, ymin + 1, 3));
-        tiling.add(new RibTile(xmin, ymin, 1));
-  } 
-  /*
-   * flips two tiles which are already known to be flippable.
-   * One of them is horizontal and another is a mirrored L.
-   */
-  private void flipHorizontalL(RibTile tile1, RibTile tile2) {
-	   double xmin, ymin;
-		if (tile1.type == 1) {
-   			xmin = tile1.xmin;
-   			ymin = tile1.ymin;
-   		} else {
-   			xmin = tile2.xmin;
-   			ymin = tile2.ymin;
-   		}
-        tiling.add(new RibTile(xmin, ymin, 3));
-        tiling.add(new RibTile(xmin + 2, ymin, 0)); 
-  }
-  /*
-   * flips two tiles which are already known to be flippable.
-   * One of them is horizontal and another is a Gamma.
-   */
-  private void flipHorizontalGamma(RibTile tile1, RibTile tile2) {
-	   double xmin, ymin;
-		if (tile1.type == 1) {
-   			xmin = tile2.xmin;
-   			ymin = tile2.ymin;
-   		} else {
-   			xmin = tile1.xmin;
-   			ymin = tile1.ymin;
-   		}
-        tiling.add(new RibTile(xmin, ymin, 0));
-        tiling.add(new RibTile(xmin + 1, ymin + 1, 2));  
-  }
 }
 
 

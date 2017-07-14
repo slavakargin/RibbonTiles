@@ -26,11 +26,14 @@ import edu.princeton.cs.algs4.Draw;
         //   |
         // 3   _|
 	    public int typeCode; // a more formal code for the type. 0 if a square in the tile goes  left, 1 if it goes up
-	    // So type vertical 0 -> "11" = 3, horizontal 1 -> "00" = 0, Russian G 2 -> "10" = 2, and reflected L 3 -> "01" = 1
+	    //We write it as an integer, the lowest byte corresponds to the first step and the highest byte corresponds to the
+	    //last step.
+	    // So type vertical 0 -> "11" = 3, horizontal 1 -> "00" = 0, Russian G 2 -> "01" = 1, and reflected L 3 -> "10" = 2
 	    public long level;
         public final int n = 3;
 	    /**
-	     * Initializes a new tile
+	     * Initializes a new tile (Somewhat deprecated constructor because uses type, which cannot be generalized.)
+	     * Use the second form of the constructor instead.
 	     */
 	    public RibTile(double xmin, double ymin, int type) {
 	        if (Double.isNaN(xmin))
@@ -51,16 +54,49 @@ import edu.princeton.cs.algs4.Draw;
                     break;
 	        case 2: this.xmax = xmin + 2;
                     this.ymax = ymin + 2;
-                    typeCode = 2;
+                    typeCode = 1;
                     break;
 	        case 3: this.xmax = xmin + 2;
                     this.ymax = ymin + 2;
-                    typeCode = 1;
+                    typeCode = 2;
                     break;
 	        }
-	        level = Math.round(xmin + ymin);
+	        level = (long) Math.floor(xmin + ymin);
 	    }
-	    /*
+	    
+	    /**
+	     * Initializes a new tile using typeCode represented as a string of 0 and 1.
+	     */
+	    public RibTile(double xmin, double ymin, String typeString) {
+	        if (Double.isNaN(xmin))
+	            throw new IllegalArgumentException("x-coordinate cannot be NaN");
+	        if (Double.isNaN(ymin))
+	            throw new IllegalArgumentException("y-coordinates cannot be NaN");
+	        this.xmin = xmin;
+	        this.ymin = ymin;
+	        typeCode = Integer.parseInt(typeString, 2);
+	        xmax = xmin + 1;
+	        ymax = ymin + 1;
+	        for (int i = 0; i < n - 1; i++) {
+	        	if (((typeCode >> i) & 1) == 1){
+	        		ymax++;
+	        	} else {
+	        		xmax++;
+	        	}
+	        }
+	        switch (typeCode) {
+	        case 3: type = 0;
+	                break;
+	        case 0: type = 1;
+                    break;
+	        case 1: type = 2;
+                    break;
+	        case 2: type = 3;
+                    break;
+	        }
+	        level = (long) Math.floor(xmin + ymin);
+	    }
+	    /**
 	     * Creates a copy of an existing tile
 	     */
 	    public RibTile(RibTile tile) {
@@ -255,7 +291,6 @@ import edu.princeton.cs.algs4.Draw;
 						(- xmin + xmax)/2, (- ymin + ymax)/2);
 				dr.setPenColor(Draw.BLACK);
 				dr.text((xmin + xmax)/2, (ymin + ymax)/2 - 0.25, String.valueOf(level));
-				//StdOut.println(String.valueOf(xmin + ymin));
 			} else if (type == 0) { // vertical tile
 				dr.setPenColor(Draw.BOOK_LIGHT_BLUE);
 				dr.filledRectangle((xmin + xmax)/2, (ymin + ymax)/2,
