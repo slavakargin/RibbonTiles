@@ -1,5 +1,7 @@
 import java.util.HashSet;
 import java.util.ArrayList;
+import java.util.Collections;
+
 //import edu.princeton.cs.algs4.Graph;
 import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdOut;
@@ -15,6 +17,8 @@ public class RibTiling {
 	public int M; //width of the rectangle
 	//public Height height; //this is the height function on this tiling (I do not use it anymore)
 	private int n = 3;
+	
+	public ArrayList<ArrayList<RibTile>> levels2tiles;
 	
 	/*
 	 * This Constructor reads the tiling from a stream input.
@@ -151,8 +155,9 @@ public class RibTiling {
 		}
 	} //end of constructor.
 	/*
-	 * Copy constructor
+	 * Copy constructor. I am not using it.
 	 */
+	/*
 	public RibTiling(RibTiling tlng) {
 		this.N = tlng.N;
 		this.M = tlng.M;
@@ -164,10 +169,91 @@ public class RibTiling {
 			tiling.add(tile);
 		}		
 	}
+	*/
+	public void distributeTiles() {
+			// I want to distribute all tiles into bins according to their level and 
+			// then sort the tiles in each bin.
+		    levels2tiles = new ArrayList<ArrayList<RibTile>>(N + M - n);
+			for (int i = 0; i < N + M - n; i++) {
+				levels2tiles.add(new ArrayList<RibTile>());			
+		    }
+			for (RibTile tile : tiling) {
+				long l = tile.level;
+				//if (l % n == 0) {
+				   levels2tiles.get((int) l).add(tile);	
+				//}		
+			}
+			//Now we will sort the bins
+			for (int i = 0; i < N + M - n; i++) {
+				Collections.sort(levels2tiles.get(i));			
+		    }
+	}
+	
 	public void draw(Draw dr) { //displays the tiling in a specified window
 		for (RibTile tile : tiling) {
 			tile.drawFilled(dr);
 		}
+		drawLevels(dr);
+		drawVerticals(dr);
+	}
+	private void drawLevels(Draw dr){
+		double x0, y0, x1, y1;
+		//I want to draw some lines that would connect the tiles of the same level. At least for 
+		// level = 0 (mod n).
+		distributeTiles();
+		dr.setPenRadius(0.005);
+		dr.setPenColor(Draw.RED);
+		for (int i = 0; i < N + M - n; i = i + n) {
+			ArrayList<RibTile> levelList = levels2tiles.get(i);	
+			//StdOut.println("Level = " + i + "; number of tiles: " + levelList.size());
+			for (int k = 0; k < levelList.size() - 1; k++) {
+                x0 = levelList.get(k).xmin + 0.5;
+                x1 = levelList.get(k + 1).xmin + 0.5;
+                y0 = levelList.get(k).ymin + 0.4;
+                y1 = levelList.get(k + 1).ymin + 0.4;
+                dr.line(x0, y0, x1, y1);
+			}
+	    }
+	}
+	
+	private void drawVerticals(Draw dr){
+		double x0, y0, x1, y1;
+		//I want to draw some lines that would indicate relation for tiles of the  
+		// level 0 modulo n
+		distributeTiles();
+		dr.setPenRadius(0.005);
+		dr.setPenColor(Draw.WHITE);
+		for (int i = 0; i < N + M - 2 * n; i = i + n) {
+			ArrayList<RibTile> levelList1 = levels2tiles.get(i);
+			ArrayList<RibTile> levelList2 = levels2tiles.get(i + n);
+			int s1 = levelList1.size();
+			int s2 = levelList2.size();
+			if (s1 < s2) {
+			for (int k = 0; k < s1; k++) {
+                x0 = levelList1.get(k).xmin + 0.5;
+                x1 = levelList2.get(k + 1).xmin + 0.5;
+                y0 = levelList1.get(k).ymin + 0.4;
+                y1 = levelList2.get(k + 1).ymin + 0.4;
+                dr.line(x0, y0, x1, y1);
+			}
+			} else if (s1 == s2) {
+				for (int k = 0; k < s1; k++) {
+	                x0 = levelList1.get(k).xmin + 0.5;
+	                x1 = levelList2.get(k).xmin + 0.5;
+	                y0 = levelList1.get(k).ymin + 0.5;
+	                y1 = levelList2.get(k).ymin + 0.5;
+	                dr.line(x0, y0, x1, y1);
+				}
+			} else {
+				for (int k = 0; k < s2; k++) {
+	                x0 = levelList1.get(k + 1).xmin + 0.5;
+	                x1 = levelList2.get(k).xmin + 0.5;
+	                y0 = levelList1.get(k + 1).ymin + 0.5;
+	                y1 = levelList2.get(k).ymin + 0.5;
+	                dr.line(x0, y0, x1, y1);
+				}
+			}
+	    }
 	}
 
 	/*I DON'T USE THE FUNCTION BELOW
@@ -299,6 +385,11 @@ public class RibTiling {
     	}
     	return 0;
     }
+    
+    /**
+     * checks if tiles t1 and t2 touch 
+     */
+    
     /**
      *   checks if tiles tile1 and tile2 can be flipped.
      */
@@ -372,7 +463,6 @@ public class RibTiling {
     public ArrayList<RibTile> findFlips(RibTile tile) {
     	ArrayList<RibTile> flips = new ArrayList<RibTile>();
     	RibTile other = null;
-    	//StdOut.println("Tile ymin is " + tile.ymin);
     	//
     	// Looking above the given tile:
     	//
@@ -404,7 +494,6 @@ public class RibTiling {
 		case 3: //mirrored L tile
 			other = findTile(tile.xmin + 1.5, tile.ymin - 0.5);
 	    } 
-    	//StdOut.println("Below is " + other);
 	    if (other != null && isFlip(tile, other)){
 		  flips.add(other);
 	    }

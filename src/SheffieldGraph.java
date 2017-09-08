@@ -31,7 +31,10 @@ public class SheffieldGraph{
 	                                          //the tile associated with a particular vertex
 	public HashMap<RibTile, Integer> labels2vertices; //This hashmap associates tiles 
 	                                                  //with vertices
-	public HashMap<Long, HashSet<Integer>> levels2vertices; //This hashmap shows what are vertices in a given level.
+	public HashMap<Long, HashSet<Integer>> levels2vertices; //This hashmap shows what are vertices 
+	//in a given level.
+	
+	public ArrayList<ArrayList<Integer>> l2v;
 	/*
 	 * This constructor calculates the graph given a tiling 
 	 */
@@ -48,19 +51,13 @@ public class SheffieldGraph{
 		labels2vertices = new HashMap<RibTile, Integer>();
 		levels2vertices = new HashMap<Long, HashSet<Integer>>();
 		for (long i = 0; i < N + M - n; i++) {
-			//StdOut.println(i);
 			HashSet<Integer> set = new HashSet<Integer>();
-			//set.add(-1);
-			//StdOut.println(set);
 			levels2vertices.put(i, set);
-			//StdOut.println(levels2vertices.get(i));
 		}
 		int k = 0;
 		for (RibTile tile : T.tiling) {
 			labels.put(k, tile);
 			labels2vertices.put(tile, k);
-			//StdOut.println(tile.level);
-			//StdOut.println(levels2vertices.get(tile.level));
 			levels2vertices.get(tile.level).add(k);
 			k++;
 		}
@@ -78,6 +75,7 @@ public class SheffieldGraph{
 		}
 		//creating edges of the reverse digraph
 		reverseDG = DG.reverse();
+		distributeVertices();
 	}
 
 	/**
@@ -142,6 +140,109 @@ public class SheffieldGraph{
 	}
 	
 	
+	private int compare(int v, int w) {
+		RibTile t = labels.get(v);
+		return t.compareTo(labels.get(w));
+	}
+	
+	/**
+	 * The function distributes all vertices into bins according to their level and then
+	 * sort the vertices in each bin according to the Sheffield order. 
+	 */
+	public void distributeVertices() {
+			tiling.distributeTiles();
+		    l2v = new ArrayList<ArrayList<Integer>>(N + M - n);
+			for (int i = 0; i < N + M - n; i++) {
+				ArrayList<Integer> listVertices = new ArrayList<Integer>();
+				ArrayList<RibTile> listTiles = tiling.levels2tiles.get(i);
+				for (int j = 0; j < listTiles.size(); j++) {
+					int v = labels2vertices.get(listTiles.get(j));
+					listVertices.add(v);
+				}
+		       l2v.add(listVertices); 
+		    }
+	}
+	/*
+	 * finds a closest vertex at a level with given offset in a given direction
+	 * @param v a vertex in the graph
+	 * @param offset is the offset from the level of v, can be from -n to n,
+	 * @param dir is the direction. 1 means forward, -1 means backward.
+	 * @returns the target vertex if the search was completed successfully, -1 if the shift
+	 * in the given direction at the given offset is impossible. 
+	*/
+	public int findTargetAtLevel(int v, int offset, int dir) {
+		// let us find the vertex u which is 
+		// 1) has the level equal to the level of v + offset. 
+		// 2)smaller than v in the Sheffield order. (or larger if dir = -1)
+		// 3)smallest one with these properties, that is, there is no u' with properties 1) and 2)
+		// such that u < u' < v.
+		if (offset > n  || offset < -n) {
+			StdOut.println("Offset out of allowed range");
+			return -1;
+		}
+		int l = (int) labels.get(v).level;
+		int i = l + offset;
+		if (i < 0 || i > N + M - n - 1) {
+			return -1;
+		}
+			ArrayList<Integer> listLevel = l2v.get(i);
+			if (dir == 1) {
+			for (int j = 0; j < listLevel.size(); j++) {
+				int w = listLevel.get(j);
+				if (j == 0 && compare(v, w) < 0) { //shift is impossible
+					return -1;
+				} else if (j < listLevel.size() - 1 && compare(v,listLevel.get(j + 1)) < 0){ //found it
+				   return w;
+				} else if (j == listLevel.size() - 1) {
+					return w;
+				} else {
+					continue;
+				}
+			}
+			} else {
+				for (int j = 0; j < listLevel.size(); j++) {
+					int w = listLevel.get(j);
+					if (j == 0 && compare(v, w) < 0) { 
+						return w;
+					} else if (j < listLevel.size() - 1 && compare(v,listLevel.get(j + 1)) < 0){ //found it
+					   return listLevel.get(j + 1);
+					} else if (j == listLevel.size() - 1) {
+						return w;
+					} else {
+						continue;
+					}
+				}
+			}
+			StdOut.println("Something might be wrong in the findTargetAtLevel function");
+			return -1;
+	}
+	/**
+	 * the first step in shifting a given vertex up or down in Sheffield's partial ordering.
+	 * finds a target vertex which will be exchanged with a given vertex
+	 * @param v a vertex in the graph
+	 *  should be different fromf zero
+	 * @param dir is the direction. 1 means forward, -1 means backward.
+	 * @returns the target vertex if the search was completed successfully, -1 if the shift
+	 * in the given direction at is impossible. 
+	 */
+	public int findTarget(int v, int dir) {
+		int target = -1;
+		for (int off = -(n - 1); off < n; off++) {
+			if (off == 0) continue; 
+			int w = findTargetAtLevel(v, off, dir);
+			if (w == -1) continue;
+			if (w != -1 && target == -1) {
+				target = w;
+			} else if (dir == 1 && compare(target, w) == -1) {
+				target = w;
+			} else if (dir == -1 && compare(target, w) == 1) {
+				target = w;
+			}
+		}
+		return target;
+	}
+
+	
 	/**
 	 * exchanges a pair of comparable vertices using  a recursive algorithm
 	 * The vertices must be comparable, or a message produced.
@@ -159,6 +260,8 @@ public class SheffieldGraph{
 				|| (t1.level == t2.level)) {
 			StdOut.println("Cannont exchange tiles. They are either \n"
                               +  "not comparable or connected by a sequence of forced edges.");
+			StdOut.println(t1);
+			StdOut.println(t2);
 			return 0;
 		}
 		
@@ -237,6 +340,11 @@ public class SheffieldGraph{
     	labels2vertices.remove(t2);
     	labels2vertices.put(nt1, v1);
     	labels2vertices.put(nt2, v2);
+    	
+    	//we recalculate the structures that contain the order of the vertices and tiles in the levels.
+    	//(this can be optimized and done by an exchange of the elements of the array, however, for simplicity
+    	//we will do it by a simple recalculation
+    	distributeVertices();
     	
     	//Now we are going to update the cover graph around nt1 and nt2
     	//First, remove all edges incident with v1 and v2
@@ -322,8 +430,14 @@ public class SheffieldGraph{
 				y1 = labels.get(w).ymin + 0.5;
 				if ((labels.get(v).level - labels.get(w).level) % n == 0) {
 					dw.setPenColor(Draw.PINK);	
+					continue; //This turns off red arrows
+				} else if ((((labels.get(v).level - labels.get(w).level) % n) 
+						+ n) % n == 2) {
+					dw.setPenColor(Draw.CYAN);
+					//continue; //this turns off cyan arrows (if levels are different by 2 modulo n)
 				} else {
 					dw.setPenColor(Draw.BOOK_BLUE);	
+					
 				}
 				dw.line(x0, y0, x1, y1);
 				//draw arrow
@@ -345,5 +459,7 @@ public class SheffieldGraph{
 			}
 		}
 		dw.show(40);
+		//StdOut.println(DG);
+		//StdOut.println(labels);
 	}
 }

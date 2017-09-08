@@ -1,7 +1,25 @@
 import edu.princeton.cs.algs4.Point2D;	
+//import edu.princeton.cs.algs4.Line2D;	
 import edu.princeton.cs.algs4.StdOut; 
 import edu.princeton.cs.algs4.Draw; 
-//import java.math.*;
+//import edu.princeton.cs.algs4.StdDraw; 
+import java.util.HashSet;
+/*
+import javax.swing.JPanel;
+import javax.swing.BorderFactory;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.geom.Point2D;
+import java.awt.geom.Line2D;
+import javax.swing.SwingUtilities;
+import javax.swing.JFrame;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseMotionAdapter;
+*/
 	/******************************************************************************
 	 *  Compilation:  javac RibTile.java
 	 *  Execution:    none
@@ -18,7 +36,7 @@ import edu.princeton.cs.algs4.Draw;
 	 *  @author Vladislav Kargin
 	 */
 
-	public final class RibTile {
+	public final class RibTile implements Comparable<RibTile>{
 	    public double xmin, ymin;   // minimum x- and y-coordinates
 	    public double xmax, ymax;   // maximum x- and y-coordinates
 	    public int type; //type of tile: 0 - vertical, 1 - horizontal,
@@ -29,10 +47,18 @@ import edu.princeton.cs.algs4.Draw;
 	    //We write it as an integer, the lowest byte corresponds to the first step and the highest byte corresponds to the
 	    //last step.
 	    // So type vertical 0 -> "11" = 3, horizontal 1 -> "00" = 0, Russian G 2 -> "01" = 1, and reflected L 3 -> "10" = 2
+	    public boolean isEmpty = false;
+	    public HashSet<Line2D> border;
 	    public long level;
         public final int n = 3;
+        /**
+         * Constructs an empty tile;
+         */
+        public RibTile() { 
+        	isEmpty = true;
+        }
 	    /**
-	     * Initializes a new tile (Somewhat deprecated constructor because uses type, which cannot be generalized.)
+	     * Initializes a new tile (Somewhat DEPRECATED constructor because uses type, which cannot be generalized.)
 	     * Use the second form of the constructor instead.
 	     */
 	    public RibTile(double xmin, double ymin, int type) {
@@ -62,6 +88,8 @@ import edu.princeton.cs.algs4.Draw;
                     break;
 	        }
 	        level = (long) Math.floor(xmin + ymin);
+	        //create Border
+	        border = calcBorder();
 	    }
 	    
 	    /**
@@ -95,6 +123,9 @@ import edu.princeton.cs.algs4.Draw;
                     break;
 	        }
 	        level = (long) Math.floor(xmin + ymin);
+	        //create Border
+	        border = calcBorder();
+	        
 	    }
 	    /**
 	     * Creates a copy of an existing tile
@@ -107,9 +138,43 @@ import edu.princeton.cs.algs4.Draw;
 	    	this.type = tile.type;
 	    	this.typeCode = tile.typeCode;
 	    	this.level = tile.level;
+	    	this.border = tile.border;
 	    }
 	    
 	    
+	    /**
+	     * Creates a HashSet that contains the border edges for the tile.
+	     * 
+	     */
+	    private HashSet<Line2D> calcBorder() {
+	    	border = new HashSet<Line2D>();
+	        // first square.
+	        int xminP = (int) xmin;
+	        int yminP = (int) ymin;
+	        
+
+	        border.add(new Line2D(xminP, yminP, xminP + 1, yminP));
+	        border.add(new Line2D(xminP, yminP, xminP, yminP + 1));
+	        border.add(new Line2D(xminP + 1, yminP, xminP + 1, yminP + 1));
+	        border.add(new Line2D(xminP, yminP + 1, xminP + 1, yminP + 1));
+	        for (int k = 0; k < n - 1; k++) {
+	        	int bit = (typeCode >> k) & 1;
+	        	if (bit == 0) { //moving to the right.
+	        		xminP = xminP + 1;
+	    	        border.add(new Line2D(xminP,yminP, xminP + 1, yminP)); //horizontal bottom
+	    	        border.remove(new Line2D(xminP,yminP, xminP, yminP + 1)); //vertical left
+	    	        border.add(new Line2D(xminP + 1, yminP, xminP + 1, yminP + 1)); //vertical right
+	    	        border.add(new Line2D(xminP, yminP + 1, xminP + 1, yminP + 1));	//horizontal top
+	        	} else {
+	        		yminP = yminP + 1;
+	    	        border.remove(new Line2D(xminP,yminP, xminP + 1, yminP)); //horizontal bottom
+	    	        border.add(new Line2D(xminP,yminP, xminP, yminP + 1)); //vertical left
+	    	        border.add(new Line2D(xminP + 1, yminP, xminP + 1, yminP + 1)); //vertical right
+	    	        border.add(new Line2D(xminP, yminP + 1, xminP + 1, yminP + 1));	//horizontal top
+	        	}	        	
+	        } 
+	        return border;
+	    }
 
 	    /**
 	     * Returns the width of this tile.
@@ -155,7 +220,7 @@ import edu.princeton.cs.algs4.Draw;
 	    	return false;
 	    }
 
-	    /*
+	    /**
 	     * compares two tiles in the sense of Sheffield. 
 	     * That is, if this tile sends light in the northwest direction and illuminates at least some
 	     * part of the other tile, then the function returns 1. (Other tile is to the left of this tile, other < this). 
@@ -205,6 +270,27 @@ import edu.princeton.cs.algs4.Draw;
 	    			return 0;
 	    		}    		
 	    	}
+	    }
+	    
+	    /**
+	     * checks if this tile touches another given tile, that is, if they share at least one edge.
+	     */
+	    public boolean isTouch(RibTile other){
+	    	/*for (Line2D edge : other.border) {
+	    		StdOut.println(edge);
+	    	}*/
+	    	for (Line2D edge : border) {
+	    		if (other.border.contains(edge)) return true;
+	    	}
+	    	return false;
+	    }
+	    
+	    /**
+	     * This is an override of the default compareTo function
+	     */
+	    @Override
+	    public int compareTo(RibTile other) {
+	        return compareWeak(other);
 	    }
 
 	    /**
@@ -330,6 +416,13 @@ import edu.princeton.cs.algs4.Draw;
 					(- xmin + xmax)/2, (- ymin + ymax)/2);
 	    	draw(dr);	 
 	    }
+	    
+	    public void drawBorder(Draw dr) {
+	    	for (Line2D line: border) {
+	    		//StdOut.println(line);
+	    		line.draw(dr);
+	    	}
+	    }
     	/*
     	 * prints the information about this tile
     	 * 
@@ -347,4 +440,149 @@ import edu.princeton.cs.algs4.Draw;
 	    	// otherwise
 	    	return false;
 	    }
+	    
+	 /*   private static void createAndShowGUI() {
+	        System.out.println("Created GUI on EDT? "+
+	                SwingUtilities.isEventDispatchThread());
+	        JFrame f = new JFrame("Swing Paint Demo");
+	        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	        f.add(new MyPanel());
+	        f.pack();
+	        f.setVisible(true);
+	    } */
+	/*    
+	    public void paint(Graphics g){
+	        g.setColor(Color.RED);
+	        g.fillRect((int) xmin, (int) ymin, 10, 10);;
+	        g.setColor(Color.BLACK);
+	        g.drawRect((int) xmin, (int) ymin, 10, 10);  
+	    }
+	    */
+	    /**
+	     * For testing methods.
+	     */
+	    public static void main(String[] args) {
+	    	RibTile tile = new RibTile(1, 2, "10");
+			int size = 10; 
+			Draw dr = new Draw();
+			dr.setXscale(-0.5, size + 0.5);
+			dr.setYscale(-0.5, size + 0.5);
+			dr.clear(Draw.LIGHT_GRAY);
+			dr.setPenRadius(0.005);
+	    	tile.drawBorder(dr);
+	    	dr.show();
+	    }
+	    /*
+		public static void main(String[] args) {
+		    // the frame for drawing to the screen
+			SwingUtilities.invokeLater(new Runnable() {
+		            public void run() {
+		                createAndShowGUI();
+		            }
+		        });	    
+		}*/
 }
+	/*
+	class MyPanel extends JPanel {
+		
+//		RedSquare redSquare = new RedSquare();
+		RibTile tile = new RibTile(1, 2, "10");
+
+	    public MyPanel() {
+	        setBorder(BorderFactory.createLineBorder(Color.black));
+	        
+	        addMouseListener(new MouseAdapter() {
+	            public void mousePressed(MouseEvent e) {
+	                moveSquare(e.getX(),e.getY());
+	            }
+	        });
+
+	        addMouseMotionListener(new MouseAdapter() {
+	            public void mouseDragged(MouseEvent e) {
+	                moveSquare(e.getX(),e.getY());
+	            }
+	        }); 
+	        
+	    }
+	   
+	    
+	    private void moveSquare(int x, int y) {
+	        // Current square state, stored as final variables 
+	        // to avoid repeat invocations of the same methods.
+	        final int CURR_X = redSquare.getX();
+	        final int CURR_Y = redSquare.getY();
+	        final int CURR_W = redSquare.getWidth();
+	        final int CURR_H = redSquare.getHeight();
+	        final int OFFSET = 1;
+
+	        if ((CURR_X!=x) || (CURR_Y!=y)) {
+
+	            // The square is moving, repaint background 
+	            // over the old square location. 
+	            repaint(CURR_X,CURR_Y,CURR_W+OFFSET,CURR_H+OFFSET);
+
+	            // Update coordinates.
+	            redSquare.setX(x);
+	            redSquare.setY(y);
+
+	            // Repaint the square at the new location.
+	            repaint(redSquare.getX(), redSquare.getY(), 
+	                    redSquare.getWidth()+OFFSET, 
+	                    redSquare.getHeight()+OFFSET);
+	        }
+	    } 
+
+	    public Dimension getPreferredSize() {
+	        return new Dimension(512,512);
+	    }
+
+	    public void paintComponent(Graphics g) {
+	    	super.paintComponent(g); 
+	    	//redSquare.paintSquare(g);
+	    	tile.paint(g);
+
+	        // Draw Text
+	        //g.drawString("This is my custom Panel!",10,20);
+	    }  
+	}
+	*/
+	/*
+	class RedSquare{
+
+	    private int xPos = 50;
+	    private int yPos = 50;
+	    private int width = 20;
+	    private int height = 20;
+
+	    public void setX(int xPos){ 
+	        this.xPos = xPos;
+	    }
+
+	    public int getX(){
+	        return xPos;
+	    }
+
+	    public void setY(int yPos){
+	        this.yPos = yPos;
+	    }
+
+	    public int getY(){
+	        return yPos;
+	    }
+
+	    public int getWidth(){
+	        return width;
+	    } 
+
+	    public int getHeight(){
+	        return height;
+	    }
+
+	    public void paintSquare(Graphics g){
+	        g.setColor(Color.RED);
+	        g.fillRect(xPos,yPos,width,height);
+	        g.setColor(Color.BLACK);
+	        g.drawRect(xPos,yPos,width,height);  
+	    }
+	}
+	*/
