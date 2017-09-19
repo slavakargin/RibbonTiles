@@ -5,6 +5,7 @@ import java.util.Collections;
 //import edu.princeton.cs.algs4.Graph;
 import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Out;
 
@@ -19,6 +20,8 @@ public class RibTiling {
 	private int n = 3;
 	
 	public ArrayList<ArrayList<RibTile>> levels2tiles;
+	public SheffieldGraph G; //Associated Sheffield's graph.
+	private RibTileVisualizer vz; //a reference to the visualizer that created this tiling.
 	
 	/*
 	 * This Constructor reads the tiling from a stream input.
@@ -26,7 +29,8 @@ public class RibTiling {
 	 * of (xmin, ymin, type) for all tiles in the tiling.
 	 * I don't do any error checking here.
 	 */
-	public RibTiling(In in) {
+	public RibTiling(In in, RibTileVisualizer vz) {
+		this.vz = vz;
 		tiling = new HashSet<RibTile>();
 		N = in.readInt();
 		M = in.readInt();
@@ -37,6 +41,8 @@ public class RibTiling {
 			int type = in.readInt();
 			tiling.add(new RibTile(xmin,ymin,type));
 		}
+		G = new SheffieldGraph(this);
+		G.reduce();
 	}
 	
 	
@@ -44,7 +50,7 @@ public class RibTiling {
 	 * This Constructor create tiling on an N-by-M board. There are several possible initializations,
 	 * which are chosen according to type variable
 	 */
-	public RibTiling(int N, int M, int type) {
+	public RibTiling(int N, int M, int type, RibTileVisualizer vz) {
 		// N is the size of the square that we are going to tile
 		// This constructor creates the default tiling:
 		// If type 0, all tiles are vertical 
@@ -53,107 +59,126 @@ public class RibTiling {
 		// If type 3, another type of "szepka".
 		// If type 4, a tiling that has two vertical tiles next to each other that differ by 1 in height.
 		// If type 5, a tiling that has two horizontal tiles next to each other that differ by 1 in x coordinates
+
 		
 		RibTile tile;
 		this.N = N; 
 		this.M = M;
+		this.vz = vz;
 		tiling = new HashSet<RibTile>();
-		//height = new Height(N, M);
-		
-		if (type == 0) {
-			for (int i = 0; i < M; i++) {
-				for (int j = 0; j < N; j += 3) {
-					tile = new RibTile(i, j, 0);
-					tiling.add(tile);
+		if (type >= 0) {
+			switch (type) {
+			case 0:
+				for (int i = 0; i < M; i++) {
+					for (int j = 0; j < N; j += 3) {
+						tile = new RibTile(i, j, 0);
+						tiling.add(tile);
+					}
 				}
-			}
-		} else if (type == 1) {
-			for (int i = 0; i < N; i++) {
-				for (int j = 0; j < M; j += 3) {
-					tile = new RibTile(j, i, 1);
-					tiling.add(tile);
+				break;
+			case 1:
+				for (int i = 0; i < N; i++) {
+					for (int j = 0; j < M; j += 3) {
+						tile = new RibTile(j, i, 1);
+						tiling.add(tile);
+					}
 				}
-			}
-		} else if (type == 2){
-			for (int i = 1; i < M; i += 3) {
-				for (int j = 1; j < N; j += 2) {
-					tile = new RibTile(i - 1, j - 1, 2);
-					tiling.add(tile);
-				}				
-			}
-			for (int i = 2; i < M; i += 3) {
-				for (int j = 1; j < N; j += 2) {
-					tile = new RibTile(i - 1, j - 1, 3);
-					tiling.add(tile);
-				}				
-			} 
-		} else if (type == 3){
-			for (int i = 1; i < M; i += 2) {
-				for (int j = 2; j < N; j += 3) {
-					tile = new RibTile(i - 1, j - 1, 2);
-					tiling.add(tile);
-				}				
-			}
-			for (int i = 1; i < M; i += 2) {
-				for (int j = 1; j < N; j += 3) {
-					tile = new RibTile(i - 1, j - 1, 3);
-					tiling.add(tile);
-				}				
-			} 
-		} else if (type == 4){
-			// first we handle verticals
-			for (int i = 1; i < M; i += 3) {
-				for (int j = 1; j < N; j += 5) {
-					tile = new RibTile(i - 1, j - 1, 0);
-					tiling.add(tile);
-					tile = new RibTile(i, j, 0);
-					tiling.add(tile);
-					tile = new RibTile(i + 1, j + 1, 0);
-					tiling.add(tile);
-				}				
-			}
-			// Now we add Russian G's
-			for (int i = 1; i < M; i += 3) {
-				for (int j = 1; j < N; j += 5) {
-					tile = new RibTile(i - 1, j + 2, 2);
-					tiling.add(tile);
-				}				
-			}
-			// Now we add mirrored L's
-			for (int i = 1; i < M; i += 3) {
-				for (int j = 1; j < N; j += 5) {
-					tile = new RibTile(i, j - 1, 3);
-					tiling.add(tile);
-				}				
+				break;
+			case 2:
+				for (int i = 1; i < M; i += 3) {
+					for (int j = 1; j < N; j += 2) {
+						tile = new RibTile(i - 1, j - 1, 2);
+						tiling.add(tile);
+					}				
+				}
+				for (int i = 2; i < M; i += 3) {
+					for (int j = 1; j < N; j += 2) {
+						tile = new RibTile(i - 1, j - 1, 3);
+						tiling.add(tile);
+					}				
+				} 
+				break;
+			case 3:
+				for (int i = 1; i < M; i += 2) {
+					for (int j = 2; j < N; j += 3) {
+						tile = new RibTile(i - 1, j - 1, 2);
+						tiling.add(tile);
+					}				
+				}
+				for (int i = 1; i < M; i += 2) {
+					for (int j = 1; j < N; j += 3) {
+						tile = new RibTile(i - 1, j - 1, 3);
+						tiling.add(tile);
+					}				
+				} 
+				break;
+			case 4:
+				// first we handle verticals
+				for (int i = 1; i < M; i += 3) {
+					for (int j = 1; j < N; j += 5) {
+						tile = new RibTile(i - 1, j - 1, 0);
+						tiling.add(tile);
+						tile = new RibTile(i, j, 0);
+						tiling.add(tile);
+						tile = new RibTile(i + 1, j + 1, 0);
+						tiling.add(tile);
+					}				
+				}
+				// Now we add Russian G's
+				for (int i = 1; i < M; i += 3) {
+					for (int j = 1; j < N; j += 5) {
+						tile = new RibTile(i - 1, j + 2, 2);
+						tiling.add(tile);
+					}				
+				}
+				// Now we add mirrored L's
+				for (int i = 1; i < M; i += 3) {
+					for (int j = 1; j < N; j += 5) {
+						tile = new RibTile(i, j - 1, 3);
+						tiling.add(tile);
+					}				
+				}
+				break;
+			case 5:
+				// first we handle horizontal tiles
+				for (int i = 1; i < M; i += 5) {
+					for (int j = 1; j < N; j += 3) {
+						tile = new RibTile(i - 1, j - 1, 1);
+						tiling.add(tile);
+						tile = new RibTile(i, j, 1);
+						tiling.add(tile);
+						tile = new RibTile(i + 1, j + 1, 1);
+						tiling.add(tile);
+					}				
+				}
+				// Now we add Russian G's
+				for (int i = 1; i < M; i += 5) {
+					for (int j = 1; j < N; j += 3) {
+						tile = new RibTile(i - 1, j, 2);
+						tiling.add(tile);
+					}				
+				}
+				// Now we add mirrored L's
+				for (int i = 1; i < M; i += 5) {
+					for (int j = 1; j < N; j += 3) {
+						tile = new RibTile(i + 2, j - 1, 3);
+						tiling.add(tile);
+					}				
+				}
+				break;
+		   default: 
+			    StdOut.println("Unknown type: " + type);
+				break;	
 			}
 		} else {
-			// first we handle horizontal tiles
-						for (int i = 1; i < M; i += 5) {
-							for (int j = 1; j < N; j += 3) {
-								tile = new RibTile(i - 1, j - 1, 1);
-								tiling.add(tile);
-								tile = new RibTile(i, j, 1);
-								tiling.add(tile);
-								tile = new RibTile(i + 1, j + 1, 1);
-								tiling.add(tile);
-							}				
-						}
-						// Now we add Russian G's
-						for (int i = 1; i < M; i += 5) {
-							for (int j = 1; j < N; j += 3) {
-								tile = new RibTile(i - 1, j, 2);
-								tiling.add(tile);
-							}				
-						}
-						// Now we add mirrored L's
-						for (int i = 1; i < M; i += 5) {
-							for (int j = 1; j < N; j += 3) {
-								tile = new RibTile(i + 2, j - 1, 3);
-								tiling.add(tile);
-							}				
-						}			
+			StdOut.println("The type cannot be negative");
 		}
-	} //end of constructor.
+			G = new SheffieldGraph(this);
+			G.reduce();
+    }
+
+
+
 	/*
 	 * Copy constructor. I am not using it.
 	 */
@@ -170,6 +195,65 @@ public class RibTiling {
 		}		
 	}
 	*/
+	
+	
+	public void mix(int ITER) { //for simplicity I will write this function only for 3-tiles here (not for general n)
+		int v1, v2 = 0;
+		long c;
+		RibTile t1;
+		for (int count = 0; count < ITER; count++) {
+			v1 = StdRandom.uniform(G.V); // a random tile. 
+			t1 = G.labels.get(v1);
+			t1.drawBorder(vz.window2, "red");
+			c = G.level(v1);					
+			//Now we need to find a comparable tile, which would be a neighbor of t1 
+			ArrayList<Integer> comparables = new ArrayList<Integer>(); //First, we collect all tiles that 
+			                                                            // are exchangeable with t1 together.
+			for (long i = c - n + 1; i < c + n; i++) {
+				if ( i >= 0 && i <= N + M - n - 1 && i != c ) {
+					comparables.addAll(G.levels2vertices.get(i));
+				}					
+			}
+            ArrayList<Integer> vicini = new ArrayList<Integer>(); //All tiles that shares an edge with t1. 
+			
+            for (int v : comparables) {
+            	if (t1.isTouch(G.labels.get(v))) {
+            		vicini.add(v);
+            	}
+            }
+            
+            if (vicini.size() == 0) { //for a border tile there is a possibility that there is no exchangeable
+            	                      //neighbor around. Then we skip this tile.
+            	StdOut.println("Exchange not possible for tile: " + G.labels.get(v1));
+            	continue;
+            } else {
+            	StdOut.println("Neighbors: ");
+            	for (int i = 0; i < vicini.size(); i++) {
+            		v2 = vicini.get(i);
+            		RibTile t = G.labels.get(v2);
+            		StdOut.println(t);
+            		t.drawSpecial(vz.window2);
+            		if (isFlip(t1, t)) {
+            			G.flip(v1, v2);
+            			break;
+            		}
+            	}
+            }
+            //Not all of vicini tiles are flippable;
+            //v2 = vicini.get(StdRandom.uniform(0, vicini.size()));
+            //G.flip(v1, v2);
+		}
+        G.update(); 
+        G.reduce();
+	}
+
+	
+	
+	
+	
+	
+	
+	
 	public void distributeTiles() {
 			// I want to distribute all tiles into bins according to their level and 
 			// then sort the tiles in each bin.
@@ -563,13 +647,12 @@ public class RibTiling {
 		return null;
 	}
 	/**
-	 * finds the tiles between two comparable files, that is tiles x such that
-	 * t1 <--- x <---- t2 and x intersects level c.
+	 * finds the tiles between two comparable files, that is, all tiles x such that
+	 * t1 <--- x <---- t2.
 	 * 
 	 * 
 	 * @param t1 a ribbon tile
 	 * @param t2 a ribbon tile comparable to t1
-	 * @param l a double, the level that the in-between tiles must intersect
 	 * @return tiles which are tiles between t1 and t2
 	 */
 	public ArrayList<RibTile> findBetween(RibTile t1, RibTile t2) {
@@ -583,7 +666,7 @@ public class RibTiling {
 			b = t1.level;
 		}
 		for (RibTile x : tiling) {
-			if (x.level >= b - n && x.level <= a + n){ //tile x intersects the line with level l
+			if (x.level >= b - n && x.level <= a + n){ //tile x is comparable with both t1 and t2;
 				if (((x.compareWeak(t1) == -1) && (x.compareWeak(t2) == 1)) 
 						|| ((x.compareWeak(t1) == 1) && (x.compareWeak(t2) == -1))) { 
 					//x is between t1 and t2

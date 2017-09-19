@@ -2,7 +2,7 @@ import edu.princeton.cs.algs4.Point2D;
 //import edu.princeton.cs.algs4.Line2D;	
 import edu.princeton.cs.algs4.StdOut; 
 import edu.princeton.cs.algs4.Draw; 
-//import edu.princeton.cs.algs4.StdDraw; 
+import edu.princeton.cs.algs4.StdDraw; 
 import java.util.HashSet;
 /*
 import javax.swing.JPanel;
@@ -409,17 +409,77 @@ import java.awt.event.MouseMotionAdapter;
 			draw(dr);
 	    }
 	    
-	    
+	    //draws the border of this tile in white
 	    public void drawSpecial(Draw dr) {
-	    	dr.setPenColor(Draw.GREEN);
-	    	dr.filledRectangle((xmin + xmax)/2, (ymin + ymax)/2,
-					(- xmin + xmax)/2, (- ymin + ymax)/2);
-	    	draw(dr);	 
+           drawBorder(dr);
 	    }
-	    
+	  //draws the border of this tile using the selected color
+	    public void drawSpecial(Draw dr, String color) {
+	           drawBorder(dr, color);
+		    }
+	    //draws the border of this tile in white
 	    public void drawBorder(Draw dr) {
+	    	dr.setPenColor(Draw.WHITE);
 	    	for (Line2D line: border) {
-	    		//StdOut.println(line);
+	    		line.draw(dr);
+	    	}
+	    }
+
+	    //draws the border of this tile using the selected color
+	    public void drawBorder(Draw dr, String color) {
+	    	switch (color) {
+	    	case "white": 
+	    		dr.setPenColor(Draw.WHITE);
+	    		break;
+	    	case "black":
+	    		dr.setPenColor(Draw.BLACK);
+	    		break;
+	    	case "blue":
+	    		dr.setPenColor(Draw.BLUE);
+	    		break;
+	    	case "cyan":
+	    		dr.setPenColor(Draw.CYAN);
+	    		break;
+	    	case "dark_gray":
+	    		dr.setPenColor(Draw.DARK_GRAY);
+	    		break;
+	    	case "gray": 
+	    		dr.setPenColor(Draw.GRAY);
+	    		break;
+	    	case "green": 
+	    		dr.setPenColor(Draw.GREEN);
+	    		break;
+	    	case "light_gray":
+	    		dr.setPenColor(Draw.LIGHT_GRAY);
+	    		break;
+	    	case "magenta":
+	    		dr.setPenColor(Draw.MAGENTA);
+	    		break;
+	    	case "orange":
+	    		dr.setPenColor(Draw.ORANGE);
+	    		break;
+	    	case "pink":
+	    		dr.setPenColor(Draw.PINK);
+	    		break;
+	    	case "red":
+	    		dr.setPenColor(Draw.RED);
+	    		break;
+	    	case "yellow":
+	    		dr.setPenColor(Draw.YELLOW);
+	    		break;
+	    	case "book_blue":
+	    		dr.setPenColor(Draw.BOOK_BLUE);
+	    	case "book_light_blue":
+	    		dr.setPenColor(Draw.BOOK_LIGHT_BLUE);
+	    		break;
+	    	case "book_red":
+	    		dr.setPenColor(Draw.BOOK_RED);
+	    		break;
+	    	default: 
+	    		dr.setPenColor(Draw.BLACK);
+	    		break;
+	    	}	    	
+	    	for (Line2D line: border) {
 	    		line.draw(dr);
 	    	}
 	    }
@@ -472,117 +532,4 @@ import java.awt.event.MouseMotionAdapter;
 	    	tile.drawBorder(dr);
 	    	dr.show();
 	    }
-	    /*
-		public static void main(String[] args) {
-		    // the frame for drawing to the screen
-			SwingUtilities.invokeLater(new Runnable() {
-		            public void run() {
-		                createAndShowGUI();
-		            }
-		        });	    
-		}*/
 }
-	/*
-	class MyPanel extends JPanel {
-		
-//		RedSquare redSquare = new RedSquare();
-		RibTile tile = new RibTile(1, 2, "10");
-
-	    public MyPanel() {
-	        setBorder(BorderFactory.createLineBorder(Color.black));
-	        
-	        addMouseListener(new MouseAdapter() {
-	            public void mousePressed(MouseEvent e) {
-	                moveSquare(e.getX(),e.getY());
-	            }
-	        });
-
-	        addMouseMotionListener(new MouseAdapter() {
-	            public void mouseDragged(MouseEvent e) {
-	                moveSquare(e.getX(),e.getY());
-	            }
-	        }); 
-	        
-	    }
-	   
-	    
-	    private void moveSquare(int x, int y) {
-	        // Current square state, stored as final variables 
-	        // to avoid repeat invocations of the same methods.
-	        final int CURR_X = redSquare.getX();
-	        final int CURR_Y = redSquare.getY();
-	        final int CURR_W = redSquare.getWidth();
-	        final int CURR_H = redSquare.getHeight();
-	        final int OFFSET = 1;
-
-	        if ((CURR_X!=x) || (CURR_Y!=y)) {
-
-	            // The square is moving, repaint background 
-	            // over the old square location. 
-	            repaint(CURR_X,CURR_Y,CURR_W+OFFSET,CURR_H+OFFSET);
-
-	            // Update coordinates.
-	            redSquare.setX(x);
-	            redSquare.setY(y);
-
-	            // Repaint the square at the new location.
-	            repaint(redSquare.getX(), redSquare.getY(), 
-	                    redSquare.getWidth()+OFFSET, 
-	                    redSquare.getHeight()+OFFSET);
-	        }
-	    } 
-
-	    public Dimension getPreferredSize() {
-	        return new Dimension(512,512);
-	    }
-
-	    public void paintComponent(Graphics g) {
-	    	super.paintComponent(g); 
-	    	//redSquare.paintSquare(g);
-	    	tile.paint(g);
-
-	        // Draw Text
-	        //g.drawString("This is my custom Panel!",10,20);
-	    }  
-	}
-	*/
-	/*
-	class RedSquare{
-
-	    private int xPos = 50;
-	    private int yPos = 50;
-	    private int width = 20;
-	    private int height = 20;
-
-	    public void setX(int xPos){ 
-	        this.xPos = xPos;
-	    }
-
-	    public int getX(){
-	        return xPos;
-	    }
-
-	    public void setY(int yPos){
-	        this.yPos = yPos;
-	    }
-
-	    public int getY(){
-	        return yPos;
-	    }
-
-	    public int getWidth(){
-	        return width;
-	    } 
-
-	    public int getHeight(){
-	        return height;
-	    }
-
-	    public void paintSquare(Graphics g){
-	        g.setColor(Color.RED);
-	        g.fillRect(xPos,yPos,width,height);
-	        g.setColor(Color.BLACK);
-	        g.drawRect(xPos,yPos,width,height);  
-	    }
-	}
-	*/

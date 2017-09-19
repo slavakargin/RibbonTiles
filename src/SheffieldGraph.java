@@ -24,7 +24,7 @@ public class SheffieldGraph{
 	private Graph G;  // This non-oriented keeps information about the comparability of tiles and so the connectivity of the Sheffield graph
 	                  // It is likely that we can avoid using this field by using weakCompare from the tiling object instead.
 	private Digraph DG;
-	private Digraph reverseDG;
+	//private Digraph reverseDG;
 	private Digraph copyDG;
 	private RibTiling tiling; //pointer to the associated tiling
 	public HashMap<Integer, RibTile> labels; //This hashmap keeps information about 
@@ -34,7 +34,10 @@ public class SheffieldGraph{
 	public HashMap<Long, HashSet<Integer>> levels2vertices; //This hashmap shows what are vertices 
 	//in a given level.
 	
-	public ArrayList<ArrayList<Integer>> l2v;
+	public ArrayList<ArrayList<Integer>> l2v; //This is a vector of vectors x; an k-th element of l2v
+	//is a collection of all vertices at the level k. The difference from levels2vertices
+	//is that this collection is sorted by Sheffield's order.
+	
 	/*
 	 * This constructor calculates the graph given a tiling 
 	 */
@@ -74,8 +77,34 @@ public class SheffieldGraph{
 			}
 		}
 		//creating edges of the reverse digraph
-		reverseDG = DG.reverse();
+		//reverseDG = DG.reverse();
 		distributeVertices();
+	}
+	
+	/**
+	 * update the graph on the basis of the current arrangement of tiles in the tiling.
+	 * IMPORTANT: it does not recalculate the arrangement of tiles on levels or reduce the graph
+	 */
+	public void update() {
+		//remove all existing edges in the digraph 
+		// We need a copy of digraph DG to modify it at will
+		copyDG = new Digraph(DG);
+		for (int v = 0; v < V; v++) {
+			for (int w : DG.adj(v)) {
+				copyDG.removeEdge(v, w);
+			}
+		}
+		DG = new Digraph(copyDG);
+		//add new edges
+		for (int i = 0; i < V; i++) {
+			for (int j = 0; j < V; j++) {
+				if (labels.get(i).compareWeak(labels.get(j)) == 1) {
+					DG.addEdge(i, j);
+				} else if (labels.get(i).compareWeak(labels.get(j)) == -1) {
+					DG.addEdge(j, i);
+				}
+			}
+		}
 	}
 
 	/**
@@ -109,6 +138,7 @@ public class SheffieldGraph{
 		DG = new Digraph(copyDG);
 	}
 	//helper function that adds all visible red edges to a vertex v
+	/*
 	private void addRedEdges(int v) {
 		RibTile t = labels.get(v);
         RibTile tile = tiling.findTile(t.xmin - 0.5, t.ymin + 0.5); 
@@ -138,8 +168,9 @@ public class SheffieldGraph{
         	reverseDG.addEdge(v, x);   	
         }    
 	}
+	*/
 	
-	
+	//compares v and w
 	private int compare(int v, int w) {
 		RibTile t = labels.get(v);
 		return t.compareTo(labels.get(w));
@@ -220,7 +251,7 @@ public class SheffieldGraph{
 	 * the first step in shifting a given vertex up or down in Sheffield's partial ordering.
 	 * finds a target vertex which will be exchanged with a given vertex
 	 * @param v a vertex in the graph
-	 *  should be different fromf zero
+	 *  should be different from zero
 	 * @param dir is the direction. 1 means forward, -1 means backward.
 	 * @returns the target vertex if the search was completed successfully, -1 if the shift
 	 * in the given direction at is impossible. 
@@ -241,6 +272,49 @@ public class SheffieldGraph{
 		}
 		return target;
 	}
+	
+	/**
+	 * the second step in shifting. Given a pair of comparable vertices v and w,
+	 * the function finds a vertex u, which is (a) between v and w; (b) has the level
+	 * equal modulo n to the level of v, and (c) is closest to w among all vertices with 
+	 * properties (a) and (b) 
+	 * @param v : a vertex
+	 * @param w : a vertex comparable with v, obtained by findTarget function
+	 * @return u : a vertex
+	 */
+	
+	public int findArrow(int v, int w) {
+		long k = labels.get(v).level;
+		long m = labels.get(w).level;
+		ArrayList<Integer> levelK = l2v.get((int) k); //all integers in the level equal to the level of v.
+		ArrayList<Integer> levelAux; //all integers in the level which is equal either to k + n or k - n.
+
+		
+		//looking for the vertex u with the right properties with initialization u = v.
+		int u = v;
+		for (int i = 0; i < levelK.size(); i++) {
+			int x = levelK.get(i);
+			if (compare(u,x) * compare(w,x) < 0) { //x is between w and current candidate u
+				u = x;
+			}
+		} 
+		if (m > k) {
+			 levelAux = l2v.get((int) k + n); //all vertices in the level equal to k + n.
+		} else {
+			levelAux = l2v.get((int) k - n); //all vertices in the level equal to k - n.
+		}
+		
+		for (int i = 0; i < levelAux.size(); i++) {
+			int x = levelAux.get(i);
+			StdOut.println("checking tile " + labels.get(x));
+			int check = compare(u,x) * compare(w,x);
+			StdOut.println("check = " + check);
+			if (check < 0) { //x is between w and current candidate u 
+				u = x;
+			}
+		} 
+		return u;
+	}
 
 	
 	/**
@@ -250,6 +324,7 @@ public class SheffieldGraph{
 	 * @param v2 another vertex in the graph.
 	 * @returns nF number of flips used in the exchange process.
 	 */
+	/* I do not want to use this method, since it does not lead to a uniform distribution
 	
 	public int exchange(int v1, int v2) {
 		int nF = 0;
@@ -293,6 +368,39 @@ public class SheffieldGraph{
 		//StdOut.println("Tiles " + t1 + " and " + t2 + " are exchanged using " + nF +"flips.");
 		return nF;
 	}
+	*/
+	/**
+	 * This function will 
+	 * (1) flip tiles t1 and t2 associated with vertices v1 and v2;
+	 * (2) update association maps labels and labels2vertices
+	 * This function does not recalculate any of the graph structure or any of the distribution of 
+	 * vertices along levels. This can be done with update method.
+	 * 
+	 */
+	
+    public void flip(int v1, int v2){
+    	RibTile t1 = labels.get(v1);
+    	RibTile t2 = labels.get(v2);
+    	RibTile nt1, nt2;
+    	Pair<RibTile, RibTile> pair;
+        //we flip t1 and t2 in the tiling
+    	pair = tiling.flipGeneric(t1, t2);
+    	nt1 = pair.a;
+    	nt2 = pair.b;
+    	labels.put(v1, nt1);
+    	labels.put(v2, nt2);
+    	//we also change associations from tiles to vertices
+    	labels2vertices.remove(t1);
+    	labels2vertices.remove(t2);
+    	labels2vertices.put(nt1, v1);
+    	labels2vertices.put(nt2, v2);
+    	
+    	//we recalculate the structures that contain the order of the vertices and tiles in the levels.
+    	//(this can be optimized and done by an exchange of the elements of the array, however, for simplicity
+    	//we will do it by a simple recalculation
+    	//distributeVertices();
+    }
+	
 	
 	/**
 	 * This function will 
@@ -303,6 +411,8 @@ public class SheffieldGraph{
 	 * (2) the cover graph has been already computed (by the reduce() method).
 	 * (3) the directed edge from v1 to v2 exists in the cover graph.
 	 */
+	/* I don't want to use this sophisticated version
+	 * 
     public void flip(int v1, int v2){
     	RibTile t1 = labels.get(v1);
     	RibTile t2 = labels.get(v2);
@@ -414,7 +524,7 @@ public class SheffieldGraph{
        addRedEdges(v1);
         addRedEdges(v2);
     }
-    
+    */
     /**
     *Draw the cover graph
     */

@@ -9,9 +9,10 @@ public class RibTileVisualizer {
 	int N, M; //height and width of the tiling.
 	public int nF, nH, nV, nL; //number of flips, horizontal, vertical and Gamma tiles.
 	public RibTiling tiling;
-	public SheffieldGraph G;
+	//public SheffieldGraph G;
 	static Scanner sc = new Scanner(System.in);
 	static final int n = 3;
+	private int silent; //should be 0 to display a plot of some statistics
 	public Draw window1, window2, wPlot; //windows for drawing 
 	int size; //size of the windows.
 
@@ -20,22 +21,21 @@ public class RibTileVisualizer {
 	 * Construct a random tiling of an N-by-M rectangle starting with a initial tiling of a 
 	 * given type and using the number ITER of random exchanges.
 	 */
-	public RibTileVisualizer(int N, int M, int type) {		
-		tiling = new RibTiling(N,M,type); //initialize a tiling 
+	public RibTileVisualizer(int N, int M, int type, int silent) {		
+		tiling = new RibTiling(N,M,type, this); //initialize a tiling 
 		this.N = N;
 		this.M = M;
-		/**
-		 * computes Sheffield's digraph for the tiling.
-		 */
-		G = new SheffieldGraph(tiling);
-		G.reduce();  //compute the cover graph for the Sheffield Graph 
+		this.silent = silent;
 		window1 = new Draw("Tiling 1");
 		window2 = new Draw("Tiling 2");
+		if (silent == 0) {
 		wPlot = new Draw("Plot");
+		}
 		size = N; 
 		if (M > N) size = M; 
 		setWindow(window1, size, 1);
         setWindow(window2,size, 512);
+        if (silent == 0) {
         setWindow(wPlot,size,768);
 		for (int i = 1; i < 10; i++) {
 			wPlot.setPenRadius(0.005);
@@ -44,30 +44,26 @@ public class RibTileVisualizer {
 			wPlot.setPenRadius(0.002);
 			wPlot.line(0, i / 10.0 * size, size + 2, i / 10.0 * size);
 		}
+        }
 	}
 
 	/**
 	 * Reads the tiling from the input stream (from a file)
 	 */
 	public RibTileVisualizer(In in) {
-		tiling = new RibTiling(in);
+		tiling = new RibTiling(in, this);
 		N = tiling.N;
 		M = tiling.M;
-		/*
-		 * computes Sheffield's digraph for the tiling.
-		 */
-		G = new SheffieldGraph(tiling);
-		G.reduce();  //compute the cover graph for the Sheffield Graph 
 		window1 = new Draw("Tiling 1");
 		window2 = new Draw("Tiling 2");
 		size = N; 
 		if (M > N) size = M; 
 		setWindow(window1, size, 1);
         setWindow(window2,size, 512);
-		draw(window1);	//drawing the tiling
-		G.draw(window1); //draw the cover graph
-		draw(window2);	
-		G.draw(window2);
+		tiling.draw(window1);	//drawing the tiling
+		tiling.G.draw(window1); //draw the cover graph
+		tiling.draw(window2);	
+		tiling.G.draw(window2);
 	}
 	
 	/*
@@ -82,126 +78,16 @@ public class RibTileVisualizer {
 		dr.setPenRadius(0.005);
 	}
 	
-	/*
-	 * shows the tiling in a window.
-	 */
-	public void draw(Draw dr) {
-		tiling.draw(dr);
+
+	public void drawSpecialTile(RibTile tile, Draw dr) {
+		tile.drawSpecial(dr);
 		dr.show(40);
 	}
-
-	public void mix(int ITER) { //for simplicity I will write this function only for 3-tiles here (not for general n)
-		int v1, v2;
-		long c;
-		RibTile t1;
-		int nF = 0;
-		for (int count = 0; count < ITER; count++) {
-			v1 = StdRandom.uniform(G.V); // a random tile. 
-			t1 = G.labels.get(v1);
-			c = G.level(v1);					
-			//Now we need to find a comparable tile, which would be a neighbor of t1 
-			ArrayList<Integer> comparables = new ArrayList<Integer>(); //First, we collect all tiles that 
-			                                                            // are exchangeable with t1 together.
-			for (long i = c - n + 1; i < c + n; i++) {
-				if ( i >= 0 && i <= N + M - n - 1 && i != c ) {
-					comparables.addAll(G.levels2vertices.get(i));
-				}					
-			}
-            ArrayList<Integer> vicini = new ArrayList<Integer>(); //All tiles that shares an edge with t1. 
-			
-            for (int v : comparables) {
-            	if (t1.isTouch(G.labels.get(v))) {
-            		vicini.add(v);
-            	}
-            }
-            
-            if (vicini.size() == 0) { //for a border tile there is a possibility that there is no exchangeable
-            	                      //neighbor around. Then we skip this tile.
-            	StdOut.println(G.labels.get(v1));
-            	continue;
-            }
-            v2 = vicini.get(StdRandom.uniform(0, vicini.size()));
-			int f = G.exchange(v1, v2);
-			if (f == 0) {
-				StdOut.println(G.labels.get(v1));
-				StdOut.println(G.labels.get(v2));
-				return;
-			}
-			nF = nF + f;
-
-
-			wPlot.setPenColor(Draw.BLACK);
-			wPlot.filledCircle(size * ((double) count / (double) ITER), 
-					(double) size * n * nF/(double)((count + 1) * N * M), 0.1); //plot the number of
-			//plots flips per iteration normalized by the total number of tiles 
-			//should be a number on the scale [0, 1]
-			nH = tiling.countTiles(0);
-			nV = tiling.countTiles(3);
-			nL = tiling.countTiles(1);
-			wPlot.setPenColor(Draw.BLUE);
-			wPlot.filledCircle(size * ((double) count / (double) ITER),
-					(double) size * n * nV / (double)(M * N) , 0.1);
-			wPlot.setPenColor(Draw.RED);
-			wPlot.filledCircle(size * ((double) count / (double) ITER),
-					(double) size * n * nH / (double)(M * N) , 0.1);
-			wPlot.setPenColor(Draw.GREEN);
-			wPlot.filledCircle(size * ((double) count / (double) ITER),
-					(double) size * n * nL / (double)(M * N) , 0.1);
-		}
-		draw(window1);	//drawing the tiling
-		G.draw(window1); //draw the cover graph
-		draw(window2);	
-		G.draw(window2); 
+	public void drawSpecialTile(RibTile tile, String color, Draw dr) {
+		tile.drawSpecial(dr, color);
+		dr.show(40);
 	}
-
-
-
-	/**
-	 * This function randomly chooses 2 vertices and exchanges their order in the acyclic graph.
-	 * It repeats this procedure a number of times and plots the results. IT also plot the averaged number of 
-	 * flips needed to take the exchange and the number of tiles of different type.
-	 * [This function is not satisfactory for our purposes because this Markov chain do not converge to the 
-	 * uniform distribution on tilings. 
-	 * 
-	 * @param ITER number of iterations
-	 */
-
-	public void mixLongRange(int ITER) {
-		int v1, v2;
-		long c;
-		for (int k = 0; k < ITER; k++) {
-			v1 = StdRandom.uniform(G.V);
-			c = G.level(v1);					
-			//Now we need to find a comparable tile, which would be exchangeable with t1 
-			ArrayList<Integer> comparables = new ArrayList<Integer>();
-			for (long i = c - n + 1; i < c + n; i++) {
-				if ( i >= 0 && i <= N + M - n - 1 && i != c ) {
-					comparables.addAll(G.levels2vertices.get(i));
-				}					
-			}
-			v2 = comparables.get(StdRandom.uniform(comparables.size()));
-			nF = nF + G.exchange(v1, v2);
-			wPlot.setPenColor(Draw.BLACK);
-			wPlot.filledCircle(size * ((double) k / (double) ITER), 
-					(double) size * n * nF/(double)((k + 1) * N * M), 0.1); //plot the number of
-			//flips per iteration normalized by the total number of tiles 
-			//should be a number on the scale [0, 1]
-			nH = tiling.countTiles(0);
-			nV = tiling.countTiles(3);
-			nL = tiling.countTiles(1);
-			wPlot.setPenColor(Draw.BLUE);
-			wPlot.filledCircle(size * ((double) k / (double) ITER),
-					(double) size * n * nV / (double)(M * N) , 0.1);
-			wPlot.setPenColor(Draw.RED);
-			wPlot.filledCircle(size * ((double) k / (double) ITER),
-					(double) size * n * nH / (double)(M * N) , 0.1);
-			wPlot.setPenColor(Draw.GREEN);
-			wPlot.filledCircle(size * ((double) k / (double) ITER),
-					(double) size * n * nL / (double)(M * N) , 0.1);
-		} 
-		wPlot.show();
-	}
-
+	
 	/*******************
 	 * MAIN 
 	 */
@@ -210,6 +96,7 @@ public class RibTileVisualizer {
 		RibTileVisualizer vz;
 		RibTile t1, t2;
 		int v1, v2;
+		int silent = 1; //set silent to zero to see a graph of some statistics.
 		////////////////////////////////////
 		/*
 		*If the tiling is not loaded from a file we will use the following parameters.
@@ -219,6 +106,7 @@ public class RibTileVisualizer {
 		int M = 12; //width
 		int ITER = 100; //number of iterations for mixing
 		int type = 2; //type of initial tiling (from 0 to 5)
+		                   //if negative, a random tiling will be generated
 		//0 - all vertical
 		//1 - all horizontal
 		//2 - szepka of Gamma and mirrored L
@@ -235,31 +123,32 @@ public class RibTileVisualizer {
 		if (option.equals("File")) {
 			StdOut.println("Enter file name: ");
 			String fName = sc.nextLine();
-			//StdOut.println(System.getProperty("user.dir"));
 			In in = new In(fName);
 			vz = new RibTileVisualizer(in);
 			in.close();
 		} else {
-			vz = new RibTileVisualizer(N, M, type); 
-			vz.mix(ITER);
+			vz = new RibTileVisualizer(N, M, type, silent); 
+			vz.tiling.mix(ITER);
 		}
-
 		vz.tiling.save("savedTiling.txt");
-        /*
-		for (int i = 0; i < vz.N + vz.M - n; i++) {
-        	StdOut.print( "Level " + i + " : ");
-        	StdOut.println(vz.tiling.levels2tiles.get(i));
-        }
-        */
-        int v = 20;
-        int offset = -3;
-        int dir = 1;
-        StdOut.println(vz.G.labels.get(v));
-        //int w = vz.G.findTargetAtLevel(v, offset, dir);
-        int w = vz.G.findTarget(v, dir);
-        StdOut.println(vz.G.labels.get(w));
-        
-
+		vz.tiling.draw(vz.window1);
+       
+		/*
+        RibTile tile = vz.tiling.findTile(6.5, 3.5);
+        int v = vz.tiling.G.labels2vertices.get(tile);
+        int dir = 1; //direction is up
+        int w = vz.tiling.G.findTarget(v, dir);
+        int u = vz.tiling.G.findArrow(v, w);
+        RibTile tileV = vz.tiling.G.labels.get(v);
+        RibTile tileW = vz.tiling.G.labels.get(w);
+        RibTile tileU = vz.tiling.G.labels.get(u);
+        StdOut.println("The chosen tile is " + tileV);
+        StdOut.println("The target tile is " + tileW);
+        StdOut.println("The arrow tile is " + tileU);
+        vz.drawSpecialTile(tileV, vz.window1);
+        vz.drawSpecialTile(tileW, "pink", vz.window1);
+        vz.drawSpecialTile(tileU, "orange", vz.window1);
+         */
 		//Second part of the program: Making some Manual flips.
 
 		// Manual flips 
@@ -315,13 +204,14 @@ public class RibTileVisualizer {
 			StdOut.println("The number of tiles between t1 and t2 is:  " 
 			  + btwnTiles.size());
 
-			v1 = vz.G.labels2vertices.get(t1);
-			v2 = vz.G.labels2vertices.get(t2);
-			vz.nF = vz.G.exchange(v1, v2);
+			v1 = vz.tiling.G.labels2vertices.get(t1);
+			v2 = vz.tiling.G.labels2vertices.get(t2);
+			vz.tiling.G.flip(v1, v2);
+			vz.tiling.G.update();
+			vz.tiling.G.reduce();
 
-			StdOut.println("The number of flips made in the process of exchange is: "+ vz.nF);
-			vz.draw(vz.window2);	//drawing the tiling
-			vz.G.draw(vz.window2); //draw the graph
+			vz.tiling.draw(vz.window2);	//drawing the tiling
+			vz.tiling.G.draw(vz.window2); //draw the graph
 		}
 	}
   }
