@@ -1,4 +1,6 @@
-import edu.princeton.cs.algs4.Draw;
+package rib3;
+//import edu.princeton.cs.algs4.Draw;
+import edu.princeton.cs.algs4.Out;
 import edu.princeton.cs.algs4.StdOut;
 
 /*
@@ -35,8 +37,8 @@ public class Height {
 	}
 
 	
-/*
- * Update height: Calculate Height using data in tiling T.	
+/**
+ *  Calculate Height using data in tiling T.	
  */
 	public void calcHeight(RibTiling T) {
 		if (T == null) {
@@ -156,9 +158,43 @@ public class Height {
             }
 		}
 	}
+
+public void saveHeight(String fn) {
+	Out out;
+	//Output heightX
+	out = new Out(fn + "_X.txt");
+	for (int i = 0; i < N + 1; i++) {
+		for (int j = 0; j < M + 1; j++) {
+			out.print(heightX[i][j] + ", ");
+		}
+		out.println();
+	}
+	out.close();
+	//Output heightY
+	out = new Out(fn + "_Y.txt");
+	for (int i = 0; i < N + 1; i++) {
+		for (int j = 0; j < M + 1; j++) {
+			out.print(heightY[i][j] + ", ");
+		}
+		out.println();
+	}
+	out.close();
+	//Output heightZ
+	out = new Out(fn + "_Z.txt");
+	for (int i = 0; i < N + 1; i++) {
+		for (int j = 0; j < M + 1; j++) {
+			out.print(heightZ[i][j] + ", ");
+		}
+		out.println();
+	}
+	out.close();
+}
+	
+	
 /*
  * modifies the height so that the height on the bottom equals 0 for all components
  */
+/*
 public void modify() {
 	for (int j = 0; j < N + 1; j++) {
 		for (int i = 0; i < M + 1; i++) { 
@@ -179,9 +215,11 @@ public void modify() {
 		}
 	}
 }
+*/
 /*
  * Calculate routings 
  */
+/*
 public void calcRouting(){
 	for (int t = 0; t < N; t++) { // thresholds
 	for (int i = 0; i < M + 1; i++) {
@@ -194,6 +232,7 @@ public void calcRouting(){
 	}
 	}
 }
+*/
 /*
  * print out the height function
  */
@@ -209,6 +248,7 @@ public void calcRouting(){
 /*
  * print routing
  */
+	/*
 	public void printRouting() {
 		for (int t = 0; t < N; t++) {
 		for (int i = 0; i < M + 1; i++) {
@@ -217,10 +257,11 @@ public void calcRouting(){
 		StdOut.println();
 		}
 	}
-
+*/
 	/*
 	 * draws routing in the specified window
 	 */
+	/*
 public void drawRouting(Draw dr) {
 	dr.setPenColor(Draw.PINK);
 	for (int t = 0; t < N; t++) {
@@ -229,5 +270,22 @@ public void drawRouting(Draw dr) {
 	}
 	}
 	dr.show(40);
+}
+*/
+
+/**
+ * For testing methods.
+ */
+public static void main(String[] args) {
+	int M, N, ITER;
+	M = 24;
+	N = 30;
+	ITER = 16000;
+	RibTiling tau = new RibTiling(N, M, 4, "Test Tiling"); 
+	tau.mix(ITER);
+	tau.draw(tau.myDr);
+	Height h = new Height(tau);
+	StdOut.println("Size of heightX is " + h.heightX.length + " and " + h.heightX[0].length);
+	h.saveHeight("Height");	
 }
 }
