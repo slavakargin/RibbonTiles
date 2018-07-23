@@ -1,16 +1,23 @@
 package xrib;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.TreeSet;
+
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
 
 import edu.princeton.cs.algs4.StdOut;
 import edu.princeton.cs.algs4.StdRandom;
+import edu.princeton.cs.algs4.Stopwatch;
 
 
 class XUtility {
-	
+
 	private XUtility() {}
-	
-	
+
+
 	/**
 	 * This convert a simple shape to the bag of squares. the shape consists of several raws. 
 	 * ShapeI is the coordinate of the initial square in each row. 
@@ -24,18 +31,18 @@ class XUtility {
 		TreeSet<Square> bag = new TreeSet<Square>();
 		for (int i = 0; i < shapeI.size(); i++) {
 			for (int j = 0; j < shapeF.get(i) - shapeI.get(i) + 1; j ++) {
-			   //S++;	
-               bag.add(new Square(shapeI.get(i) + j, i)); 
+				//S++;	
+				bag.add(new Square(shapeI.get(i) + j, i)); 
 			}
 		}	
 		return bag;
 	}
-	
+
 	/**
 	This function finds a sink in the acyclic Digraph DG. More specifically, if there are several sinks,  
 	then it produces the smallest of them in the order of increasing level from left to right
-	*/
-	
+	 */
+
 	static ArrayList<Integer> findSinkSequence(MyDigraph DG){
 		int V; //Number of vertices
 		Boolean[] marked; //marks the vertices that were found as sinks.
@@ -52,9 +59,9 @@ class XUtility {
 		findSink(DG, sinkSeq, marked, V);
 		return(sinkSeq);
 	}
-	
 
-	
+
+
 	private static void findSink(MyDigraph DG, ArrayList<Integer> sinkSeq, Boolean[] marked, int V) {
 		//we will do the search recursively
 		//First, we check how many vertices are yet unmarked.
@@ -83,7 +90,7 @@ class XUtility {
 			}
 		}
 	}
-	
+
 	/**
 	 * s0 is a square on the left border of the shape. The program calculates the tile with the
 	 * root at s0 and which lies on the left border of the shape.
@@ -91,7 +98,7 @@ class XUtility {
 	 * @param s0
 	 * @return
 	 */
-	
+
 	static XRibTile getBorderTile(Square s0, int n, TreeSet<Square> squares) {
 		XRibTile tile;
 		TreeSet<Square> tileSquares = new TreeSet<Square>();
@@ -100,23 +107,23 @@ class XUtility {
 
 		//find the other squares from the tile
 		for (int level = l0 + 1; level < l0 + n; level++) {
-		for (Square s : squares) {
-			if (s.x == s0.x && s.y == s0.y + 1) {
-				tileSquares.add(s);
-				s0 = new Square(s.x, s.y);
-				break;
-			} else if (s.x == s0.x + 1 && s.y == s0.y) {
-				tileSquares.add(s);
-				s0 = new Square(s.x, s.y);
-				break;
+			for (Square s : squares) {
+				if (s.x == s0.x && s.y == s0.y + 1) {
+					tileSquares.add(s);
+					s0 = new Square(s.x, s.y);
+					break;
+				} else if (s.x == s0.x + 1 && s.y == s0.y) {
+					tileSquares.add(s);
+					s0 = new Square(s.x, s.y);
+					break;
+				}
 			}
 		}
-		}
-	     tile = new XRibTile(tileSquares);
-	     return tile;
+		tile = new XRibTile(tileSquares);
+		return tile;
 	}
-	
-	
+
+
 	/**
 	 * 
 	 * converts an integer n to a string of length numOfBits 
@@ -127,23 +134,23 @@ class XUtility {
 	 * @return
 	 */		
 	static String intToBinary (int n, int numOfBits) {
-		   String binary = "";
-		   for(int i = 0; i < numOfBits; ++i, n/=2) {
-		      switch (n % 2) {
-		         case 0:
-		            binary = "0" + binary;
-		            break;
-		         case 1:
-		            binary = "1" + binary;
-		            break;
-		      }
-		   }
-		   return binary;
+		String binary = "";
+		for(int i = 0; i < numOfBits; ++i, n/=2) {
+			switch (n % 2) {
+			case 0:
+				binary = "0" + binary;
+				break;
+			case 1:
+				binary = "1" + binary;
+				break;
+			}
 		}
+		return binary;
+	}
 	/**
 	 * This method realizes the Glauber dynamics on the tiling. A tile is chosen at random.
 	 * Then a flip is chosen at random (if possible) and performed. This procedure is repeated
-	 * for ITER iterations. 
+	 * for ITER iterations. Note that the original tile is modified.
 	 * 
 	 * @param xrt the original tiling.
 	 * @param ITER number of steps in the Glauber dynamics
@@ -152,26 +159,25 @@ class XUtility {
 		XRibTile tile, otherTile;
 		ArrayList<XRibTile> flips;
 		int randNum;
-       //StdRandom.setSeed(17);
-       for (int i = 0; i < ITER; i++) {
-    	   if (i % 1000 == 0) {
-    		   StdOut.println("Iteration " + i);
-    	   }
-       randNum = StdRandom.uniform(xrt.tiles().size());
-       tile = xrt.tiles().get(randNum);
-       flips = xrt.findFlips(tile);
-       if (flips != null && flips.size() > 0) {
-         randNum = StdRandom.uniform(flips.size());
-         otherTile = flips.get(randNum);
-         boolean flag = xrt.flip(tile, otherTile);
-         if (!flag) { //flag == false means that there was a problem with this flip.
-        	 StdOut.println("there was a problem with a flip; quitting Glauber algorithm.");
-        	 return;
-         }
-       } else {
-    	   continue;
-       }
-       }
+		//StdRandom.setSeed(17);
+		for (int i = 0; i < ITER; i++) {
+			if (i % 1000 == 0) {
+				StdOut.println("Iteration " + i);
+			}
+			randNum = StdRandom.uniform(xrt.tiles().size());
+			tile = xrt.tiles().get(randNum);
+			flips = xrt.findFlips(tile);
+			if (flips != null && flips.size() > 0) {
+				randNum = StdRandom.uniform(flips.size());
+				otherTile = flips.get(randNum);
+				boolean flag = xrt.flip(tile, otherTile);
+				if (!flag) { //flag == false means that there was a problem with this flip.
+					StdOut.println("there was a problem with a flip; quitting Glauber algorithm.");
+					return;
+				}
+			} else {
+				continue;
+			}
+		}
 	}
-
 }

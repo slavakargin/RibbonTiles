@@ -42,14 +42,13 @@ public class XRibTiling {
 		 * @param label
 		 */
 		
-		XRibTiling(int n, TreeSet<Square> bag, String label) {
+		public XRibTiling(int n, TreeSet<Square> bag, String label) {
 			this.n = n;
 			this.label = label;
 			//tiling = new TreeSet<XRibTile>(new XTiles2ndComp()); //
 			tiling = new ArrayList<XRibTile>();
 			square2tile = new TreeMap<Square, XRibTile>();
-			shape = new XShape(bag);
-			
+			shape = new XShape(bag);		
 			
 			if (shape.squares.size() % n != 0) {
 				StdOut.println("An error in XGraph constructor.");
@@ -80,66 +79,12 @@ public class XRibTiling {
 			xG = new XGraph(this);
 			H.calcHeightInside();
 		}
-		
-		
-		
-		/**
-		 * Creates a tiling from a bag of squares and a sinkSequence Calculates height at the border, 
-		 * crossing points for intersection of the level curves x + y = l and the region, 
-		 * and difference of heights at these crossing points, which is needed to calculate
-		 * how many tiles are in each level.
-		 * 
-		 * 
-		 * @param n
-		 * @param bag
-		 * @param label
-		 */
-		
-		XRibTiling(int n, TreeSet<Square> bag, ArrayList<Integer> sinkSeq) {
-			this.n = n;
-			//tiling = new TreeSet<XRibTile>(new XTiles2ndComp()); //
-			tiling = new ArrayList<XRibTile>();
-			square2tile = new TreeMap<Square, XRibTile>();
-			shape = new XShape(bag);
-			
-			
-			if (shape.squares.size() % n != 0) {
-				StdOut.println("An error in XGraph constructor.");
-				StdOut.println("The number of squares in the shape is " + shape.squares.size()  
-				                + ". It must be divisible by " + n);
-				StdOut.println("Quitting ...");
-			}
-			
-			boolean test = isTileable();
-			if (!test) {
-				StdOut.println("The region is not tileable. The numbers of squares of different colors are not the same.");
-				int[] count = countColoredTiles();
-				StdOut.println("The count is ");
-				for (int i = 0; i < n; i++) {
-					StdOut.print(count[i] + "; ");
-				}
-				StdOut.println();
-			};
-			//initialize tiling 
-			for (int v = 0; v < shape.squares.size()/n; v++){
-				tiling.add(null);
-			}
-			//We calculate the height at the border of the shape and the structure of the associated graph
-			H = new XHeight(this);
-			//creating the associated digraphs
-			staticDG = new StaticGraph(this);
-			buildTiling(sinkSeq, shape.squares.size()/n); //build the tiling from sinkSeq. 
-			xG = new XGraph(this);
-			H.calcHeightInside();
-		}
-		
-		
+				
 		/**
 		 * Creates a copy of a tiling "other"
 		 * @param other
-		 */
-		
-		XRibTiling(XRibTiling other) {
+		 */		
+		public XRibTiling(XRibTiling other) {
            this.n = other.n;
            this.label = other.label;
            //copy shape, staticDG, tiling and square2tile structures
@@ -153,6 +98,78 @@ public class XRibTiling {
 			H = new XHeight(this);
 		}
 		
+		/**
+		 * Creates a default tiling of a rectangle with width M and length N.
+		 * The tiling is by ribbon n-tiles.
+		 * 
+		 * 
+		 * @param n
+		 * @param M
+		 * @param N
+		 * @return
+		 */		
+		public static XRibTiling rectangle(int n, int M, int N) {
+			ArrayList<Integer> shapeI = new ArrayList<Integer>();
+			ArrayList<Integer> shapeF = new ArrayList<Integer>();
+	        for (int i = 0; i < M; i++) {
+	        	shapeI.add(0);
+	        	shapeF.add(N - 1);
+	        }
+			TreeSet<Square> squares = XUtility.shape2bag(shapeI, shapeF);
+			XRibTiling rect = new XRibTiling(n, squares, "");
+			return rect;
+		}
+		
+		/**
+		 * Creates a default tiling of a stair-shaped region with width M and length N.
+		 * The tiling is by ribbon n-tiles.
+		 * 
+		 * In this region each row has length N but the rows are shifted relative to each other by a square,
+		 * so that the resulting shape is a parallelogram.
+		 * The first row starts at x = 0, the second -- at x = 1, the third -- at x = 2 and so on.  
+		 * 
+		 * @param n
+		 * @param M
+		 * @param N
+		 * @return
+		 */		
+		public static XRibTiling stair(int n, int M, int N) {
+			ArrayList<Integer> shapeI = new ArrayList<Integer>();
+			ArrayList<Integer> shapeF = new ArrayList<Integer>();
+	        for (int i = 0; i < M; i++) {
+	        	shapeI.add(i);
+	        	shapeF.add(i + N - 1);
+	        }
+			TreeSet<Square> squares = XUtility.shape2bag(shapeI, shapeF);
+			XRibTiling rect = new XRibTiling(n, squares, "");
+			return rect;
+		}
+		
+		/**
+		 * Creates a default tiling of a stair-shaped region with width M and length N.
+		 * The tiling is by ribbon n-tiles. The difference from the stair regions is that 
+		 * here the stair goes down. 
+		 * 
+		 * In this region each row has length N but the rows are shifted relative to each other by a square,
+		 * so that the resulting shape is a parallelogram.
+		 * The first row starts at x = M - 1, the second -- at x = M - 2, the third -- at x = M - 3 and so on.  
+		 * 
+		 * @param n
+		 * @param M
+		 * @param N
+		 * @return
+		 */		
+		public static XRibTiling downStair(int n, int M, int N) {
+			ArrayList<Integer> shapeI = new ArrayList<Integer>();
+			ArrayList<Integer> shapeF = new ArrayList<Integer>();
+	        for (int i = M - 1; i >= 0; i--) {
+	        	shapeI.add(i);
+	        	shapeF.add(i + N - 1);
+	        }
+			TreeSet<Square> squares = XUtility.shape2bag(shapeI, shapeF);
+			XRibTiling rect = new XRibTiling(n, squares, "");
+			return rect;
+		}
 		
 		/**
 		 * calculates the first k titles of a tiling using a given sinkSequence.
@@ -474,13 +491,7 @@ public class XRibTiling {
 	   ArrayList<XRibTile> findFlips(XRibTile tile) {
 			XRibTile otherTile;
 			ArrayList<XRibTile> flips = new ArrayList<XRibTile>();
-			/*
-			for (Square s : shape.squares){
-			    StdOut.println(s + " -> " + square2tile.get(s));
-			}
-			*/
 			otherTile = findTile(tile.xmin - 0.5, tile.ymin + 0.5);
-			//StdOut.println("OtherTile = " + otherTile);
 			if (otherTile != null && isFlip(tile, otherTile)) {
 				flips.add(otherTile);
 			}
@@ -489,7 +500,6 @@ public class XRibTiling {
 				flips.add(otherTile);
 			}
 			otherTile = findTile(tile.xmax + 0.5, tile.ymax - 0.5);
-			//StdOut.println("Other tile is " + otherTile);
 			if (otherTile != null && isFlip(tile, otherTile)) {
 				flips.add(otherTile);
 			}
@@ -499,73 +509,7 @@ public class XRibTiling {
 			}
 			return flips;
 		}
-	   
-	   
-	   /**
-	    * Checks if the graph xG is consistent with the current tiling;
-	    */
-	   private boolean checkGraph() {
-		   int V = shape.squares.size()/n;
-		   for (int u = 0; u < V; u++) {
-			   for (int v = 0; v < V; v++) {
-				   if (v == u) continue;
-				   if (tiling.get(u).compareTo(tiling.get(v)) > 0 && !xG.DG.isEdge(u, v)) {
-					   StdOut.println("Tile " + tiling.get(u) + " > tile " +  tiling.get(v) 
-					       + " but there is no edge from the corresponding vertex " + u + " to vertex " + v);
-					   
-					   return false;
-				   }
-				   if (xG.DG.isEdge(u, v) && tiling.get(u).compareTo(tiling.get(v)) <= 0) {
-					   StdOut.println("There is an edge from vertex " + u + " to vertex " + v 
-							   + " but tile " + tiling.get(u) + " <= tile " +  tiling.get(v));
-					   return false;
-				   }
-			   }
-		   }
-		   return true;
-	   }
-	   
-	   private void printTiling() {
-		   for (int v = 0; v < tiling.size(); v++) {
-			   StdOut.println(v + " -> " + tiling.get(v));
-		   }
-	   }
-		
-		/**
-		 * This method realizes the Glauber dynamics on the tiling. A tile is chosen at random.
-		 * Then a flip is chosen at random (if possible) and performed. This procedure is repeated
-		 * for ITER iterations. 
-		 * 
-		 * @param ITER number of steps in the Glauber dynamics
-		 */
-	   /*
-		void Glauber(int ITER){
-			XRibTile tile, otherTile;
-			ArrayList<XRibTile> flips;
-			int randNum;
-           //StdRandom.setSeed(17);
-           for (int i = 0; i < ITER; i++) {
-        	   if (i % 1000 == 0) {
-        		   StdOut.println("Iteration " + i);
-        	   }
-           randNum = StdRandom.uniform(tiling.size());
-           tile = tiling.get(randNum);
-           flips = findFlips(tile);
-           if (flips != null && flips.size() > 0) {
-             randNum = StdRandom.uniform(flips.size());
-             otherTile = flips.get(randNum);
-             boolean flag = flip(tile, otherTile);
-             if (!flag) { //flag == false means that there was a problem with this flip.
-            	 return;
-             }
-           } else {
-        	   continue;
-           }
-           }
-		}
-		
-		*/
-
+	
 		
 		public void draw() {
 			shape.draw();
@@ -578,6 +522,41 @@ public class XRibTiling {
 			}
 		}
 
+	    /**
+	     * Compares this tiling to another tiling and returns true if they are the same.
+	     * It is assumed that tiling are for the same region and the ribbon tiles have the same number of squares.
+	     * 
+	     * The equality happens only if every RibTile in this tiling equals to the corresponding
+	     * RibTile in the other tiling. 
+	     *
+	     * @param  other the other tile
+	     * @return {@code true} if this tile equals {@code other};
+	     *         {@code false} otherwise
+	     */
+		@Override
+	    public boolean equals(Object other) {
+	        if (other == this) return true;
+	        if (other == null) return false;
+	        if (other.getClass() != this.getClass()) return false;
+	        XRibTiling that = (XRibTiling) other;
+			for (int i = 0; i < this.tiling.size(); i++ ) {
+				if (!this.tiling.get(i).equals(that.tiling.get(i))) {
+					return false;
+				}
+			}
+			return true;
+		}
+		
+	    /**
+	     * Returns an integer hash code for this tiling. The hash code depends only on the tiling structure
+	     * 
+	     * @return an integer hash code for this tilint
+	     */
+	    @Override
+	    public int hashCode() {
+	    	return tiling.hashCode();
+	    }
+		
 	/**
 	 * For testing methods.
 	 */
@@ -585,8 +564,6 @@ public class XRibTiling {
 
 		ArrayList<Integer> shapeI = new ArrayList<Integer>();
 		ArrayList<Integer> shapeF = new ArrayList<Integer>();
-		//XRibTile tile;
-		
 		
 		/* Test case 1
 		 * 	
@@ -602,95 +579,11 @@ public class XRibTiling {
 		}
 		TreeSet<Square> bag = XUtility.shape2bag(shapeI, shapeF);	
 		XRibTiling xrt = new XRibTiling(n, bag, "Test");
-       /* tile = new XRibTile(0, 0, "010");
-		xrt.addTile(tile);
-		tile = new XRibTile(2, 0, "110");
-		xrt.addTile(tile);
-		tile = new XRibTile(3, 1 + 3, "010");
-		xrt.addTile(tile);
-		tile = new XRibTile(0, 1, "001");
-		xrt.addTile(tile);
-		tile = new XRibTile(0, 3, "001");
-		xrt.addTile(tile);
-		tile = new XRibTile(1, 3, "000");
-		xrt.addTile(tile);
-		tile = new XRibTile(5, 0 + 3, "100");
-		xrt.addTile(tile);
-		tile = new XRibTile(5, 1 + 3, "010");
-		xrt.addTile(tile);
-		tile = new XRibTile(0, 5, "000");
-		xrt.addTile(tile);
-		*/
-		
-		//Test case 2
-		/*
-		int N = 4;
-		int n = 3;
-		int ITER = 2048001;
-        for (int i = 0; i < N; i++) {
-        	shapeI.add(N - i - 1);
-        	shapeF.add(N + 2 * i + 1);
-        }
-        //StdOut.println("shapeI = " + shapeI);
-        //StdOut.println("shapeF = " + shapeF);
-        for (int i = 0; i < N; i++) {
-        	shapeI.add(i); 
-        	shapeF.add(3 * N - 2 * i - 1);
-        }  
-
-		TreeSet<Square> bag = XUtility.shape2bag(shapeI, shapeF);	
-		XRibTiling xrt = new XRibTiling(n, bag, "Test");
-		        */
-		xrt.draw();
-		ArrayList<Integer> sinkSeq0 = XUtility.findSinkSequence(xrt.xG.DG);
-		StdOut.println("Original SinkSequence is " + sinkSeq0);
-
-		/*XRibTile t1 = new XRibTile(1, 3, "000");
-		XRibTile t2 = new XRibTile(3, 1 + 3, "010");
-		XRibTile t3 = new XRibTile(2, 0, "111");
-		XRibTile t4  = new XRibTile(3, 0, "111");
-		XRibTile t5 = new XRibTile(0, 3, "011");
-		XRibTile t6  = new XRibTile(0, 0, "010");
-		ArrayList<XRibTile> flips = xrt.findFlips(t4);
-		StdOut.println("Flips = " + flips);
-		*/
-
-		
-		XRibTiling xrtCopy = new XRibTiling(xrt);
-       /* flips = xrtCopy.findFlips(t3);
-        StdOut.println("Flips are " + flips);
-		xrtCopy.flip(t3, t4);
-		xrtCopy.flip(t5, t6);*/
-		
+		xrt.draw();		
+		XRibTiling xrtCopy = new XRibTiling(xrt);	
 		int ITER = 10000;
 		XUtility.Glauber(xrtCopy, ITER);
 		xrtCopy.draw();
-		ArrayList<Integer> sinkSeq1 = XUtility.findSinkSequence(xrtCopy.xG.DG);
-		StdOut.println("Graph is " + xrtCopy.xG.DG);
-		StdOut.println("Target SinkSequence is " + sinkSeq1);
 
-		ArrayList<Double> ss = new ArrayList<Double>();
-		for (int i = 0; i < sinkSeq1.size(); i++) {
-			ss.add(sinkSeq0.get(i) * 0.5 + sinkSeq1.get(i) * (1 - 0.5));
-		}
-		
-		ArrayIndexComparator<Double> comparator = new ArrayIndexComparator<Double>(ss);
-		ArrayList<Integer> indices = comparator.createIndexArray();
-		Collections.sort(indices, comparator);
-		StdOut.println("ss = " + ss);
-		StdOut.println("indices = " + indices);
-		for (int j = 0; j < indices.size(); j++) {
-			StdOut.println(ss.get(indices.get(j)));
-		}
-		
-		//now we need also invert the permutation coded by indices.
-		ArrayList<Integer> sinkSeq = new ArrayList<Integer>();
-		for (int j = 0; j < indices.size(); j++) {
-			sinkSeq.add(indices.indexOf(j));
-		}
-		StdOut.println("sinkseq = " + sinkSeq);
-		
-		XRibTiling xrtCopy2 = new XRibTiling(n, bag, sinkSeq);
-		xrtCopy2.draw(); 
 	}
 }
