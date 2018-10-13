@@ -29,7 +29,7 @@ final class Square implements Comparable<Square> {
 	
 	
     /**
-     * Compares this square to another squqre and returns true if they are the same,
+     * Compares this square to another square and returns true if they are the same,
      * which happens only if this.x = other.x, this.y = other.y
      *
      * @param  other the other square

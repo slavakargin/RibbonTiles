@@ -42,13 +42,14 @@ class XHeight {
 	}
 	
 	
-	/**
+	/** The constructor is less general then the following. 
 	 * This is a constructor directly from a shape and the parameter n, which is the length of the ribbon tiles.
 	 * Only height on the border can be calculated. 
 	 * 
 	 * @param shape
 	 * @param n
 	 */
+	/*
 	public XHeight (int n, XShape shape) {
 		this.n = n;
 		this.shape = new XShape(shape);
@@ -60,7 +61,43 @@ class XHeight {
 		}
 		calcHeightBorder();
 	}
+	*/
 
+	/**
+	 * Constructs height on the border of a non-simply connected region.
+	 * In this version we allow only for a one-connected region. 
+	 * An additional information is a point on the inside border curve.
+	 * It will be supplied as a square inside the hole. The point on the left-bottom corner
+	 * of this whole will get zero height.
+	 * 
+	 * @param n the size of ribbons
+	 * @param shape the region
+	 * @param squares sequence of the squares which will serve as the base points for 
+	 *        the calculation of height on the border of the holes
+	 *   
+	 */
+	public XHeight (int n, XShape shape, Square... squares) {
+		this.n = n;
+		this.shape = new XShape(shape);
+		height = new TreeMap<Square, ArrayList<Integer>>();
+		// initialization
+		// note that height can be defined also on squares that are outside of T.
+		for (Square s : shape.squares) {
+			height.put(s, new ArrayList<Integer>(n));
+		}
+		calcHeightBorder(); //this calculates the height on the outside border
+		
+		ArrayList<Integer> h = new ArrayList<Integer>(n);
+		for (int i = 0; i < n; i++) {
+			h.add(0);
+		}
+		for ( Square s : squares) {
+			for (int i = 0; i < n; i++) {
+				h.set(i, 0);
+			}
+		    calcHB(s, h); //this calculates the height at the border of the hole. 
+		}
+	}
 
 	/**
 	 * calculate the height on the border of the tiling. The assumption is that 
@@ -279,7 +316,7 @@ public void saveHeight(String fn) {
 		/* 
 		 * test case 4
 		 */
-		n = 3;
+		/*n = 3;
 		for (int i = 0; i < 2; i ++){
 			shapeI.add(0);
 			shapeF.add(20);
@@ -311,11 +348,37 @@ public void saveHeight(String fn) {
 		
 		s = new Square(1, 12);
 		bag.add(s);
+		*/
+		
+		
+		//test case 5 (non-simply connected region)
+		
+		 n = 3;
+		for (int i = 0; i < 1; i ++){
+		shapeI.add(0);
+		shapeF.add(2);
+		}
+
+		for (int i = 1; i < 6; i ++){
+		shapeI.add(0);
+		shapeF.add(0);
+		}
+		TreeSet<Square> bag = XUtility.shape2bag(shapeI, shapeF);	
+		Square s;
+		for (int i = 1; i < 4; i++) {
+		s = new Square(2, i);
+		bag.add(s);		
+		}
+		s = new Square(1, 3);
+		bag.add(s);
 		
 		
 		XShape xs = new XShape(bag);
-		XHeight H = new XHeight(n, xs);
+		Square s0 = new Square(1, 1);
+		XHeight H = new XHeight(n, xs, s0);
 		H.draw();
+		
+		
 		
 		/*
 		xrt = new XRibTiling(n, bag, "");	

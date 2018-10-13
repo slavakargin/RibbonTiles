@@ -16,8 +16,6 @@ import java.util.HashMap;
 
 
 public class TilingReconstructor {
-	private int N; //height
-	private int M; //width
 	private int V; //total number of vertices.
 	private int L; //number of levels
 	private int n = 3;
@@ -38,8 +36,6 @@ public class TilingReconstructor {
 	}
 	
 	public TilingReconstructor(int N, int M, Digraph dgTransition, Digraph dgCode, int canvasSizeW, int canvasSizeH, int offsetX, int offsetY) {	
-		this.N = N;
-		this.M = M;
 		V = M * N / n;
 		L = N + M - n;
 		rt = new RibTiling(N, M, "Reconstruction", canvasSizeW, canvasSizeH, offsetX, offsetY);

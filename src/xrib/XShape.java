@@ -21,11 +21,11 @@ public class XShape {
 	//cases when the intersection is from a joining intervals
 	//of from the creation of a new interval.
 	protected ArrayList<ArrayList<Square>> crossesHalf1; // intersections with the level lines x + y = k + 1/2 : 
-	                                                     // we will save an intersection point by keeping
-	                                                     // two squares so that the intersection is the midpoint of the 
-	                                                     //roots of these two squares (i.e., their south-west corners)
-	                                                     //this should help us to compute heights for these points. 
-	
+	// we will save an intersection point by keeping
+	// two squares so that the intersection is the midpoint of the 
+	//roots of these two squares (i.e., their south-west corners)
+	//this should help us to compute heights for these points. 
+
 	protected ArrayList<ArrayList<Square>> crossesHalf2;
 	//Variables for visualization
 	protected Draw myDr; //the window to which the object will draw. 
@@ -64,6 +64,110 @@ public class XShape {
 		this.Lmax = other.Lmax;
 		calculateCrosses();
 		calcWeakCrosses();
+	}
+
+
+	/**
+	 * Creates an analog of the Aztec Diamond with size N.
+	 * for a tiling is by ribbon 3-tiles.
+	 * 
+	 * @param N
+	 * @return
+	 */		
+	public static XShape aztec3(int N) {        
+		TreeSet<Square> bag = new TreeSet<Square>();
+		for (int l = 0; l < N; l++) {
+			for (int i = l; i < N; i++) {
+				for (int k = 0; k < 3; k++) {
+					Square s = new Square(i, N - 1 - i + 3 * l + k);
+					//StdOut.println(s);
+					bag.add(s);
+				}
+			}
+		}
+		for (int l = 0; l < N; l++) {
+			for (int i = N; i < N + 1 + l; i++) {
+				for (int k = 0; k < 3; k++) {
+					Square s = new Square(i, N - i + 3 * l + k);
+					//StdOut.println(s);
+					bag.add(s);
+				}
+			}
+		}
+		//StdOut.println(bag);
+		XShape aD = new XShape(bag);
+		return aD;
+	}
+
+
+	/**
+	 * Creates an analog of the Aztec Diamond with size N.
+	 * for a tiling is by ribbon n-tiles.
+	 * 
+	 * @param N
+	 * @return
+	 */		
+	public static XShape aztecRibbon(int n, int N) {        
+		TreeSet<Square> bag = new TreeSet<Square>();
+		for (int l = 0; l < N; l++) {
+			for (int i = l; i < N; i++) {
+				for (int k = 0; k < n; k++) {
+					Square s = new Square(i, N - 1 - i + n * l + k);
+					//StdOut.println(s);
+					bag.add(s);
+				}
+			}
+		}
+		for (int l = 0; l < N; l++) {
+			for (int i = N; i < N + 1 + l; i++) {
+				for (int k = 0; k < n; k++) {
+					Square s = new Square(i, N - i + n * l + k);
+					//StdOut.println(s);
+					bag.add(s);
+				}
+			}
+		}
+		//StdOut.println(bag);
+		XShape aD = new XShape(bag);
+		return aD;
+	}
+
+
+	/**
+	 * Creates an analog of the Aztec Diamond with size N.
+	 * for a tiling is by ribbon n-tiles.
+	 * This is a variant that has the tiles of all types.
+	 * 
+	 * @param N
+	 * @return
+	 */		
+	public static XShape aztecRibbon2(int n, int N) {        
+		TreeSet<Square> bag = new TreeSet<Square>();
+		for (int l = 0; l < N; l++) {
+			for (int i = l; i < N; i++) {
+				for (int k = 0; k < n; k++) {
+					Square s = new Square(i, N - 1 - i + n * l + k);
+					//StdOut.println(s);
+					bag.add(s);
+				}
+			}
+		}
+		for (int l = 1; l <= N; l++) {
+			//int l = 1; //level 
+			for (int i = 0; i < l; i++) { //x coordinate increment
+				int x = N + i * (n - 1); 
+				for (int t = 0; t < n - 1; t++) { //types of tiles
+					for (int k = 0; k < n; k++) { //squares of a ribbon
+						Square s = new Square(x + t, N + (l - 1) * n - x + k);
+						//StdOut.println(s);
+						bag.add(s);
+					}
+				}
+			}
+		}
+		//StdOut.println(bag);
+		XShape aD = new XShape(bag);
+		return aD;
 	}
 
 	/**
@@ -135,12 +239,12 @@ public class XShape {
 		for (int i = 0; i < Lmax + 2; i++) {
 			weakCrosses.add(new ArrayList<Integer>());
 		}
-		
+
 		for (int i = 0; i < Lmax + 1; i++) {
 			crossesHalf1.add(new ArrayList<Square>());
 			crossesHalf2.add(new ArrayList<Square>());
 		}
-		
+
 		//Calculating weakCrosses
 		for (int l = 0; l < Lmax + 2; l++) { //cycle over levels
 			ArrayList<Integer> list = new ArrayList<Integer>();
@@ -168,17 +272,17 @@ public class XShape {
 					Square s1 = new Square(i/2 - 1, l - i/2);
 					if ((squares.contains(s0) && !squares.contains(s1)) ||
 							(!squares.contains(s0) && squares.contains(s1))){ //there is a square on the right but no square on the left
-						                                                      // or vice versa.
+						// or vice versa.
 						list1.add(s0);
 						list2.add(new Square(i/2, l - i/2 + 1));
 					}
-			
+
 				} else { //the x coordinate is half-integer and the y coordinate is integer
 					Square s0 = new Square((i - 1)/2, l - (i - 1)/2);
 					Square s1 = new Square((i - 1)/2, l - (i - 1)/2 - 1);
 					if ((squares.contains(s0) && !squares.contains(s1)) ||
 							(!squares.contains(s0) && squares.contains(s1))) { //square above is in the region and the
-						                                                       //square below is not or vice versa
+						//square below is not or vice versa
 						list1.add(s0);
 						list2.add(new Square((i + 1)/2, l - (i - 1)/2));
 					}								
@@ -373,29 +477,52 @@ public class XShape {
 		dr.setXscale(-0.5, size + 0.5);
 		dr.setYscale(-0.5, size + 0.5);
 		dr.clear(Draw.LIGHT_GRAY);
+		dr.setPenRadius(0.001);
+
+
+		dr.setPenColor(Draw.BOOK_LIGHT_BLUE);
 		dr.setPenRadius(0.005);
 
 		// now we can draw
+		// we simply draw all squares in the shape
+		for (Square s : squares) {
+			s.draw(dr);
+		}
+
+		dr.setPenColor(Draw.WHITE);
+		dr.setPenRadius(0.001);
+		for (int i = 0; i < size; i++) {
+			dr.line(i, 0, i, size);
+		}
+		for (int i = 0; i < size; i++) {
+			dr.line(0, i, size, i);
+		}
+
+		dr.setPenColor(Draw.BLACK);
+		dr.setPenRadius(0.005);
+		/*
 		Square sOrigin = getBorderPoint();
 		Square s0 = new Square(sOrigin);
 		Square s1 = moveAroundCCW(s0);
 		while (!s1.equals(sOrigin)) {
-			myDr.line(s0.x, s0.y,  s1.x, s1.y);
+			dr.line(s0.x, s0.y,  s1.x, s1.y);
 			s0 = s1;
 			s1 = moveAroundCCW(s0);	
 		}
-		myDr.show();
+		 */
+		dr.show();
+
 	}
 
-	
+
 	public void drawLevel(int l) {
 		if (myDr == null) {
 			myDr = new Draw();
 			myDr.setCanvasSize(800, 800);
 		}
 		myDr.setPenColor(Draw.BLUE);
-        myDr.line(0, l, l, 0);
-        myDr.setPenColor(Draw.BLACK);
+		myDr.line(0, l, l, 0);
+		myDr.setPenColor(Draw.BLACK);
 	}
 
 	/**
@@ -432,21 +559,22 @@ public class XShape {
 				bag.add(s);
 			}
 		}
-        */
+		 */
 		/* Test case 2
 		 * 	
 		 */	
+		/*
 		for (int i = 0; i < 1; i ++){
 		shapeI.add(0);
 		shapeF.add(2);
 		}
-		
+
 		for (int i = 1; i < 4; i ++){
 		shapeI.add(0);
 		shapeF.add(0);
 		}
 		TreeSet<Square> bag = XUtility.shape2bag(shapeI, shapeF);
-		
+
 		XShape shape = new XShape(bag);
 		shape.draw();
 		StdOut.println("weakCrosses:");
@@ -459,6 +587,13 @@ public class XShape {
 			StdOut.print("Level = " + i + " + 1/2 : ");
 			StdOut.println(shape.crossesHalf1.get(i));
 			StdOut.println(shape.crossesHalf2.get(i));
-		}	
+		}
+		 */
+		/* test case 3
+		 * 
+		 */
+
+		XShape shape = XShape.aztecRibbon2(3,4);
+		shape.draw();
 	}
 }

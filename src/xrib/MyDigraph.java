@@ -82,6 +82,9 @@ public class MyDigraph {
 
 	/**
 	 * 	Adds the directed edge v -> w to this digraph.
+	 * The behavior is different from the similar method in Digraph class.
+	 * The edge is only added if it does not exist. Hence, multiple edges between the same vertices
+	 * are not allowed. 
 	Parameters:
 	v - the tail vertex
 	w - the head vertex
@@ -91,7 +94,9 @@ public class MyDigraph {
 	 * @param w
 	 */
 	public void addEdge(int v, int w) {
-		DG.addEdge(v, w);
+		if (!isEdge(v, w)) {
+		    DG.addEdge(v, w);
+		}
 	}
 	
 	/**

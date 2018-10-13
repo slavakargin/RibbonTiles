@@ -1,15 +1,11 @@
 package xrib;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Collections;
 import java.util.TreeMap;
 import java.util.TreeSet;
 //import java.util.Random;
 
 import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdOut;
-import edu.princeton.cs.algs4.StdRandom;
 
 public class XRibTiling {
 	  //conceptual variables
@@ -31,10 +27,13 @@ public class XRibTiling {
 		String label;
 		
 		/**
-		 * Creates a default tiling from a bag of squares. Calculates height at the border, 
-		 * crossing points for intersection of the level curves x + y = l and the region, 
-		 * and difference of heights at these crossing points, which is needed to calculate
-		 * how many tiles are in each level.
+		 * Creates a default tiling from a bag of squares. This constructor was build to
+		 * work with regions that have only one interval in the intersection with 
+		 * level lines x + y = l. The constructor will calculate a default tiling and the 
+		 * graphs associated with the region and the tiling. 
+		 * A new version below is available to do some of the work for the regions that have multiple 
+		 * intersections, however it is not very sophisticated since its purpose is simply be called from 
+		 * an XGraph object.
 		 * 
 		 * 
 		 * @param n
@@ -79,6 +78,46 @@ public class XRibTiling {
 			xG = new XGraph(this);
 			H.calcHeightInside();
 		}
+		
+		/**
+		 * This a new version of the general constructor. It is supposed to work even for
+		 * the regions that have multiple intersections with lines x+y = l;
+		 * The constructor is supposed to be called from an XGraph object. 
+		 * 
+		 * @param n
+		 * @param bag
+		 */
+		
+		public XRibTiling(int n, TreeSet<Square> bag) {
+			this.n = n;
+			tiling = new ArrayList<XRibTile>();
+			square2tile = new TreeMap<Square, XRibTile>();
+			shape = new XShape(bag);		
+			
+			if (shape.squares.size() % n != 0) {
+				StdOut.println("An error in XGraph constructor.");
+				StdOut.println("The number of squares in the shape is " + shape.squares.size()  
+				                + ". It must be divisible by " + n);
+				StdOut.println("Quitting ...");
+			}
+			
+			boolean test = isTileable();
+			if (!test) {
+				StdOut.println("The region is not tileable. The numbers of squares of different colors are not the same.");
+				int[] count = countColoredTiles();
+				StdOut.println("The count is ");
+				for (int i = 0; i < n; i++) {
+					StdOut.print(count[i] + "; ");
+				}
+				StdOut.println();
+			};
+			//initialize tiling 
+			for (int v = 0; v < shape.squares.size()/n; v++){
+				tiling.add(null);
+			}
+			
+		}
+		
 				
 		/**
 		 * Creates a copy of a tiling "other"
@@ -89,7 +128,9 @@ public class XRibTiling {
            this.label = other.label;
            //copy shape, staticDG, tiling and square2tile structures
            this.shape = new XShape(other.shape);
-           this.staticDG = new StaticGraph(other.staticDG);
+           if (other.staticDG != null) {
+               this.staticDG = new StaticGraph(other.staticDG);
+           }
 		   tiling = new ArrayList<XRibTile>(other.tiling);
 		   square2tile = new TreeMap<Square, XRibTile>(other.square2tile);
 
@@ -119,6 +160,39 @@ public class XRibTiling {
 			XRibTiling rect = new XRibTiling(n, squares, "");
 			return rect;
 		}
+		
+		
+		/**
+		 * Creates a default tiling of an Aztec Diamond with size N.
+		 * The tiling is by dominoes.
+		 * 
+		 * @param N
+		 * @return
+		 */		
+		public static XRibTiling aztecDiamond(int N) {
+			ArrayList<Integer> shapeI = new ArrayList<Integer>(2 * N);
+			ArrayList<Integer> shapeF = new ArrayList<Integer>(2 * N);
+	        for (int i = 0; i < N; i++) {
+	        	shapeI.add(N - i - 1);
+	        	shapeF.add(N + i);
+	        }
+	        for (int i = 0; i < N; i++) {
+	        	shapeI.add(i);
+	        	shapeF.add(2 * N - i - 1);
+	        }
+	        
+			TreeSet<Square> bag = XUtility.shape2bag(shapeI, shapeF);
+			for (int i = 0; i < shapeI.size(); i++) {
+				for (int j = 0; j < shapeF.get(i) - shapeI.get(i) + 1; j ++) {
+	               bag.add(new Square(shapeI.get(i) + j, i)); 
+				}
+			}	
+			XRibTiling aD = new XRibTiling(2, bag, "Aztec");
+			return aD;
+		}
+		
+		
+		
 		
 		/**
 		 * Creates a default tiling of a stair-shaped region with width M and length N.
@@ -211,7 +285,13 @@ public class XRibTiling {
 		 */
 		
 		 void buildTiling(int k) {
-			ArrayList<Integer>  sinkSeq = XUtility.findSinkSequence(staticDG.sG);
+			 ArrayList<Integer> sinkSeq = new ArrayList<Integer>();
+			 if (staticDG != null) {
+			    sinkSeq = XUtility.findSinkSequence(staticDG.sG); //in old versions I calculated staticDG (the digraph of 
+			                                                       // forced edges), then I stopped doing it.
+			 } else {
+				 sinkSeq = XUtility.findSinkSequence(xG.DG);
+			 }
 			buildTiling(sinkSeq, k);
 		}
 		
@@ -378,7 +458,7 @@ public class XRibTiling {
 			//Update the graph 
 			v1 = tiling.indexOf(tile1);
 			v2 = tiling.indexOf(tile2);
-			//StdOut.println("graph before flip is " + xG.DG);
+			//StdOut.println("graph before flip is " + xG);
 			if (tile1.compareTo(tile2) > 0) { //tile2 is to the left of tile1, and v1 -> v2
 				//StdOut.println("Flipping edge (" + v1 + " -> " + v2 + ").");
 				xG.DG.removeEdge(v1, v2);
@@ -517,8 +597,12 @@ public class XRibTiling {
 		}
 		
 		public void draw(Draw dr) {
+			shape.drawShape(dr);
 			for (XRibTile tile : tiling) {
+				if (tile != null) {
+				//StdOut.println("Drawing tile " + tile);
 				tile.draw(dr);
+				}
 			}
 		}
 

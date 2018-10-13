@@ -4,13 +4,14 @@ import java.util.ArrayList;
 import java.util.TreeSet;
 //import edu.princeton.cs.algs4.Digraph;
 
-public class Interval {
+public class Interval implements Comparable<Interval> {
 	int a, b; //the x coordinates of the endpoints of the interval, multiplied by 2. 
 	          //we assume a <= b  
 	int level; //the line at which the interval is located, multiplied by 2
-	ArrayList<Integer> diffH; //this is the difference in heights at the end-points of the interval. 
+	ArrayList<Integer> diffH; //the difference in heights at the end-points of the interval.
+	ArrayList<Integer> leftH; //twice the height on the left end-point of the interval
 	ArrayList<Integer> tileVector; //shows how many tiles of different levels intersect this interval.
-	TreeSet<Integer> tileSet; //show which tiles intersect this interval (where tiles have the standard enumeration in 
+	TreeSet<Integer> tileSet; //shows which tiles intersect this interval (where tiles have the standard enumeration in 
 	                          //the context of the region: in each level from left to right and in the order of increasing level.
 	//Digraph Gamma; //this is a local graph that shows the order forced on tiles of different levels that intersect this interval
 	//ArrayList<Integer> dotLevel; //shows the level of each dot in the digraph Gamma
@@ -21,6 +22,12 @@ public class Interval {
 		this.b = b;		
 		this.level = level;
 		tileSet = new TreeSet<Integer>();
+	}
+	
+	public Interval (Interval iv) {
+		this.a = iv.a;
+		this.b = iv.b;
+		this.level = iv.level;
 	}
 	//returns true if intersect the other interval. Both intervals are normalized by projecting 
 	//them on the line x + y = 0 
@@ -44,9 +51,17 @@ public class Interval {
 	 * set the differences in heights at the end-points of the interval. 
 	 * @param h
 	 */
-	 public void setDiffH( ArrayList<Integer> diff) {
-		 diffH = new ArrayList<Integer>(diff);
+	 public void setDiffH( ArrayList<Integer> diffH) {
+		 this.diffH = new ArrayList<Integer>(diffH);
 	 }
+	 
+		/**
+		 * set the height at the left end-point of the interval. 
+		 * @param h
+		 */
+		 public void setLeftH( ArrayList<Integer> leftH) {
+			 this.leftH = new ArrayList<Integer>(leftH);
+		 }
 	 
 		/**
 		 * set the vector of intersection numbers of the interval. 
@@ -56,15 +71,6 @@ public class Interval {
 			 tileVector = new ArrayList<Integer>(tV);
 		 }
 	 
-			/**
-			 * set the local graph of the interval. 
-			 * @param G a directed graph. 
-			 */
-		 /*
-			 public void setLocalGraph( Digraph G) {
-				 Gamma = new Digraph(G);
-			 }
-			 */
 		 
 	@Override
 	public String toString() {
@@ -86,5 +92,19 @@ public class Interval {
 	public int hashCode() {
 		return 1299721*(1299721 * a + b) * level;
 	}
+	
+    @Override
+    public int compareTo(Interval other) {
+        if (other.level < level)  {
+        	return 1;
+        }  else if (other.level > level) {
+        	return -1;
+        } else if ( other.a < a ) {
+        	return 1;
+        } else if (other.a > a) {
+        	return -1;
+        }
+        return 0;
+    }
 }
 

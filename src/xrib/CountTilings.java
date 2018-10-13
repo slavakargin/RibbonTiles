@@ -2,10 +2,8 @@ package xrib;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.TreeSet;
 
 import edu.princeton.cs.algs4.StdOut;
-import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdRandom;
 import edu.princeton.cs.algs4.Stopwatch;
 
@@ -17,8 +15,8 @@ public class CountTilings {
 	 * [Currently, there should be at least 2 tilings of the given shape. If there is just one
 	 * default tiling, then the program will never stop. 
 	 * 
-	 * @param shape
-	 * @param n 
+	 * @param n
+	 * @param tiling 
 	 * @param maxSearchTime maximum time allowed for the search of a new tiling 
 	 * @param timeLimit maximum amount of time for the counting;
 	 * 
@@ -31,7 +29,9 @@ public class CountTilings {
 		
 		HashSet<XRibTiling> allTilings = new HashSet<XRibTiling>();
 		XRibTiling xrt = new XRibTiling(tiling);
-		xrt.buildTiling();
+		if (xrt.tiles().isEmpty()) {
+		   xrt.buildTiling();
+		}
 		xrt.draw();
 		allTilings.add(xrt);
 		Stopwatch st = new Stopwatch();
@@ -77,23 +77,38 @@ public class CountTilings {
 	public static void main(String[] args) {
 		XRibTiling region;
 		int n = 3; //number of squares in a ribbon
-		int M = 7; //number of rows
-		int N = 3; //number of columns
-		double maxSearchTime = 40.; //the limit (in seconds) on the search of a new tiling;
-		double timeLimit = 600.; // the limit (in seconds) on the total time spent in search; 
+		int M = 6; //number of rows
+		int N = 6; //number of columns
+		double maxSearchTime = 1200.; //the limit (in seconds) on the search of a new tiling;
+		double timeLimit = 7200.; // the limit (in seconds) on the total time spent in search; 
 
-		//region = XRibTiling.rectangle(n, M, N);
-		region = XRibTiling.stair(n, M, N);
+		region = XRibTiling.rectangle(n, M, N);
+		//region = XRibTiling.stair(n, M, N);
 		//region = XRibTiling.downStair(n, M, N);
-	
-		HashSet<XRibTiling> allTilings = countTilings(n, region, maxSearchTime, timeLimit);
+		HashSet<XRibTiling> allTilings = countTilings(n, region, maxSearchTime, timeLimit); 
+		
+		//test case 2: an analog of the Aztec diamond for n-ribbon tiles
+		/*
+		n = 3;
+		N = 2;
+		//XShape shape = XShape.aztecRibbon(n, N);
+		//test case 3: a different analog of Aztec diamond for n-ribbon tiles.
+		XShape shape = XShape.aztecRibbon2(n, N);
+		XGraph xg = new XGraph(n, shape); //now region = xg.tiling
+		HashSet<XRibTiling> allTilings = countTilings(n, xg.tiling, maxSearchTime, timeLimit);
+		*/
+		
 		int randNum = StdRandom.uniform(allTilings.size());
 		ArrayList<XRibTiling> listOfTilings = new ArrayList<XRibTiling>(allTilings);
 		XRibTiling xrt = listOfTilings.get(randNum);
 		xrt.draw();
-		/*for (XRibTiling xrt: allTilings) {
+		/*
+		 for (XRibTiling xrt: allTilings) {
 			StdOut.println(xrt);
 			xrt.draw();
-		}*/
+		}
+		*/
+		
+
 	}
 } 
