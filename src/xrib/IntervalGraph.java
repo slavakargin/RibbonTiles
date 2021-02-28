@@ -243,8 +243,8 @@ public class IntervalGraph {
 		
 		// We also need a map tile2level
 		tile2level = new ArrayList<Integer>();
-		StdOut.println("The number of squares in the shape is " + shape.squares.size());
-		StdOut.println("The number of tiles is " + shape.squares.size()/n);
+		//StdOut.println("The number of squares in the shape is " + shape.squares.size());
+		//StdOut.println("The number of tiles is " + shape.squares.size()/n);
 		//StdOut.println("levelStarts = " + levelStarts);
 		//StdOut.println("level2tiles = " + level2tiles);
 		for (int v = 0; v < shape.squares.size()/n; v++) {

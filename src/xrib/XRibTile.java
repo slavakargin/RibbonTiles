@@ -122,8 +122,19 @@ public final class XRibTile implements Comparable<XRibTile> {
 	        border = calcBorder();	
 	    }
 	    
-	    TreeSet<Square> squares() {
+	    public TreeSet<Square> squares() {
 	    	return new TreeSet<Square>(squares);
+	    }
+	    
+	    /**
+	     * calculates the number of vertical steps 
+	     * 
+	     * TODO make implementation
+	     * @return
+	     */
+	    public int numberVertical() {
+	    	int x = 0;
+	    	return x;
 	    }
         
 	     private ArrayList<Line2D> calcBorder() {
@@ -373,10 +384,11 @@ public final class XRibTile implements Comparable<XRibTile> {
 	    
 	    
 	    /**
-	     * Draws this tile to a given window. 
+	     * Draws this tile to a given window. If v is positive also shows it in the
+	     * picture (it is the label of the tile). 
 	     * 
 	     */
-	    void draw(Draw dr) {
+	    void draw(Draw dr, int v) {
 	    	int color;
 	    	switch (n) {
 	    	case 2: 
@@ -425,7 +437,7 @@ public final class XRibTile implements Comparable<XRibTile> {
 		    		} else if (level % 3 == 1){
 		    		     dr.setPenColor(Draw.BLUE);
 		    		} else {
-		    			 dr.setPenColor(Draw.BLACK);
+		    			 dr.setPenColor(Draw.PINK);
 		    		} 
 	    		}
 	    		break;
@@ -442,6 +454,9 @@ public final class XRibTile implements Comparable<XRibTile> {
             dr.setPenColor(Draw.BLACK);
             for (Line2D line : border) {
             	line.draw(dr);
+            }
+            if (v > 0) {
+            	dr.text(xmin + 0.5,ymin + 0.5,String.valueOf(v));
             }
 	    }
 	    
@@ -464,7 +479,7 @@ public final class XRibTile implements Comparable<XRibTile> {
 			dr.setYscale(-0.5, size + 0.5);
 			dr.clear(Draw.LIGHT_GRAY);
 			dr.setPenRadius(0.005);
-			tile.draw(dr);
+			tile.draw(dr, 7);
 			double x = 1.5;
 			double y = 2.6;
 			double r = 0.1;

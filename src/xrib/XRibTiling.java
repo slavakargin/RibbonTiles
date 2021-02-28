@@ -3,20 +3,37 @@ import java.util.ArrayList;
 import java.util.TreeMap;
 import java.util.TreeSet;
 //import java.util.Random;
-
 import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdOut;
 
+
+/*
+ * This is the class for a ribbon tiling of a shape. 
+ * 
+ * Right now there is some confusion here with two variants of 
+ * constructors. 
+ *
+ * 
+ * 
+ * 
+ */
+
+
+
+
 public class XRibTiling {
 	  //conceptual variables
-	    private ArrayList<XRibTile> tiling; //An ordered set of tiles in the tiling. The order is determined by the 
+	    protected ArrayList<XRibTile> tiling; //An ordered set of tiles in the tiling. The order is determined by the 
 	                                        //order of the lowest square of each tile. It is different from Sheffield's partial order.
 	                                           //It can be empty if we have not yet 
 	                                           //tiled the region
 		  //Geometric variables
 	    int n; //length of the ribbon
 	    XShape shape; 
-	    StaticGraph staticDG; //This is the graph which depends only on the shape of the region and not on the tiles 
+	    
+	    StaticGraph staticDG; //I should try to remove this and rely only on xG, which
+	                          //already contains info about forced edges.
+	                          //This is the graph which depends only on the shape of the region and not on the tiles 
 	    XGraph xG; //Graph associated to the tiling. 
 
 		TreeMap<Square, XRibTile> square2tile; //map that shows which tile covers a given square.
@@ -25,6 +42,10 @@ public class XRibTiling {
 
       //Variables for visualization
 		String label;
+		
+		
+		public XRibTiling() {		
+		}
 		
 		/**
 		 * Creates a default tiling from a bag of squares. This constructor was build to
@@ -56,10 +77,10 @@ public class XRibTiling {
 				StdOut.println("Quitting ...");
 			}
 			
-			boolean test = isTileable();
+			boolean test = shape.isTileable(n);
 			if (!test) {
 				StdOut.println("The region is not tileable. The numbers of squares of different colors are not the same.");
-				int[] count = countColoredTiles();
+				int[] count = shape.countColoredSquares(n);
 				StdOut.println("The count is ");
 				for (int i = 0; i < n; i++) {
 					StdOut.print(count[i] + "; ");
@@ -71,11 +92,16 @@ public class XRibTiling {
 				tiling.add(null);
 			}
 			//We calculate the height at the border of the shape and the structure of the associated graph
-			H = new XHeight(this);
+			//I do not really want to calculate anything even the default tiling.
+			
 			//creating the associated digraphs
-			staticDG = new StaticGraph(this);
-			buildTiling(); //build the default tiling. 
+			//staticDG = new StaticGraph(this); // not really sure if I use it for anything.
+			xG = new XGraph(n, shape);
+			buildTilingFromXG(); //build the default tiling. 
+			//StdOut.println("Tiling size = " + tiling.size());
+			//StdOut.println("Tiling = " + tiling);
 			xG = new XGraph(this);
+			H = new XHeight(this);
 			H.calcHeightInside();
 		}
 		
@@ -88,23 +114,26 @@ public class XRibTiling {
 		 * @param bag
 		 */
 		
-		public XRibTiling(int n, TreeSet<Square> bag) {
-			this.n = n;
-			tiling = new ArrayList<XRibTile>();
-			square2tile = new TreeMap<Square, XRibTile>();
-			shape = new XShape(bag);		
-			
-			if (shape.squares.size() % n != 0) {
+		public static XRibTiling fromXGraph(int n, XGraph xG) {
+			XRibTiling xrt = new XRibTiling();
+			xrt.n = n;
+			xrt.label = "";
+			xrt.tiling = new ArrayList<XRibTile>();
+			xrt.square2tile = new TreeMap<Square, XRibTile>();
+			xrt.shape = xG.shape;	
+			xrt.xG = xG;
+			//StdOut.println(" n = " + n);
+			if (xG.shape.squares.size() % n != 0) {
 				StdOut.println("An error in XGraph constructor.");
-				StdOut.println("The number of squares in the shape is " + shape.squares.size()  
+				StdOut.println("The number of squares in the shape is " + xG.shape.squares.size()  
 				                + ". It must be divisible by " + n);
 				StdOut.println("Quitting ...");
 			}
 			
-			boolean test = isTileable();
+			boolean test = xrt.shape.isTileable(n);
 			if (!test) {
 				StdOut.println("The region is not tileable. The numbers of squares of different colors are not the same.");
-				int[] count = countColoredTiles();
+				int[] count = xrt.shape.countColoredSquares(xrt.n);
 				StdOut.println("The count is ");
 				for (int i = 0; i < n; i++) {
 					StdOut.print(count[i] + "; ");
@@ -112,10 +141,10 @@ public class XRibTiling {
 				StdOut.println();
 			};
 			//initialize tiling 
-			for (int v = 0; v < shape.squares.size()/n; v++){
-				tiling.add(null);
-			}
-			
+			for (int v = 0; v < xrt.shape.squares.size()/n; v++){
+				xrt.tiling.add(null);
+			}		
+			return xrt;
 		}
 		
 				
@@ -157,7 +186,25 @@ public class XRibTiling {
 	        	shapeF.add(N - 1);
 	        }
 			TreeSet<Square> squares = XUtility.shape2bag(shapeI, shapeF);
-			XRibTiling rect = new XRibTiling(n, squares, "");
+			XRibTiling rect = new XRibTiling(n, squares, "Rectangle");
+			return rect;
+		}
+		
+		/**
+		 * Creates a random tiling of a rectangle with width M and length N.
+		 * The method is by a some kind of Glauber dynamics. 
+		 * 
+		 * 
+		 * @param n
+		 * @param M
+		 * @param N
+		 * @return
+		 */		
+		public static XRibTiling rectangleRandom(int n, int M, int N) {
+			XRibTiling rect = rectangle(n, M, N);
+			int ITER = 10000;
+			XUtility.Glauber(rect, ITER);
+			rect.xG = new XGraph(rect); //update xG graph
 			return rect;
 		}
 		
@@ -295,7 +342,50 @@ public class XRibTiling {
 			buildTiling(sinkSeq, k);
 		}
 		
+			//calculates a tiling consistent with the orientation in DG. 
 		
+		 public void buildTilingFromXG() {
+				buildTilingFromXG(xG.V);
+		 }
+			
+			
+			/**
+			 * calculates the first k titles of a tiling using xG graph
+			 * we will assume that level2intervals in interval graph list 
+			 * intervals from left to right. 
+			 * @param k
+			 */
+			
+			private void buildTilingFromXG(int k) {
+				int v, l0;
+				Square s0 = null;
+				XRibTile tile; 
+				TreeSet<Square> bag = new TreeSet<Square>(xG.ig.shape.squares); 
+				//as we build the tiling we will remove the 
+				//squares from the bag.
+				//completeGraph();
+				//StdOut.println(" n = " + n);
+				ArrayList<Integer> sinkSeq = XUtility.findSinkSequence(xG.DG);
+				for (int count = 0; count < k; count++) {
+					v = sinkSeq.get(count);	
+					l0 = xG.ig.tile2level.get(v); //level of the target tile
+					// we need to find a root square for this tile. 
+					//For this we look for the smallest squares at level l0 in our bag.
+					//As we go by we need to check that they are close to each other. 
+					//find the first ("root") square
+					for (Square s : bag) {
+						if (s.x + s.y == l0) {
+							s0 = new Square(s); //this is the desired root of the tile. 
+							break;
+						}
+					}
+					//StdOut.println("The root square for tile " + v + " is square " + s0);
+					//get the tile with the root at s0 and on the left border
+					tile = XUtility.getBorderTile(s0, n, bag);
+					bag.removeAll(tile.squares());
+					addTile(v, tile);
+				}
+			}	
 		
 		/**
 		 * Returns a copy of the TreeSet that contains all the tiles in the tiling. 
@@ -342,32 +432,15 @@ public class XRibTiling {
 		/**
 		 * Tests tileability of the tiling by checking if the shape has the same
 		 * number of squares of each color.
+		 * @deprecated Use {@link xrib.XShape#isTileable(xrib.XRibTiling)} instead
 		 */
-		Boolean isTileable(){
-			int[] count = new int[n]; // counter for the colors 
-			                          //(the calculation is up to a constant, same for each color)
-			int color;
-			for (Square s: shape.squares) {
-				color = (s.x + s.y + n) % n;
-				count[color]++;
-			}
-			for (int i = 0; i < n - 1; i++) {
-				if (count[i] != count[i + 1]) return false;
-			}
-			return true;
+		/*
+		 * Boolean isTileable(){
+			return shape.isTileable(this);
 		}
+		*/
 		
-		private int[] countColoredTiles(){
-			int[] count = new int[n]; // counter for the colors 
-            //(the calculation is up to a constant, same for each color)
-            int color;
-            for (Square s: shape.squares) {
-                 color = (s.x + s.y + n) % n;
-                 count[color]++;
-            }
-            return count;
-		}
-		
+
 		
 		/**
 		 * Finds a tile that contain point (x, y)
@@ -390,6 +463,10 @@ public class XRibTiling {
 		
 		/** 
 		 * flip a pair of ordered tiles. It is assumed that the pair is flippable. 
+		 * Updates the digraph xG.DG and the tiling and the square2tile
+		 * but do not update the edges structures in xG
+		 * (that is, the list of the edges which are flippable) 
+		 * Relies on findFlips and isFlip methods.
 		 * 
 		 */	
 		
@@ -456,6 +533,9 @@ public class XRibTiling {
 			}
 			
 			//Update the graph 
+	
+			
+			
 			v1 = tiling.indexOf(tile1);
 			v2 = tiling.indexOf(tile2);
 			//StdOut.println("graph before flip is " + xG);
@@ -479,7 +559,9 @@ public class XRibTiling {
 				return false;
 			}
 			
+			
 			//update the tiling structure
+			
 			if (xG.DG.isEdge(v1,v2)) { //v1 -> v2 in graph
 				 if (ntile1.compareTo(ntile2) > 0) { //ntile1 -> ntile2 in tiling
 					tiling.set(v1, ntile1);
@@ -499,6 +581,7 @@ public class XRibTiling {
 				}
 			}
 			
+			
 			//Remove tile1 and tile2 from square2tile map	
 			for (Square square : tile1.squares()) {
 				square2tile.remove(square);
@@ -513,6 +596,7 @@ public class XRibTiling {
 			for (Square square : ntile2.squares()) {
 				square2tile.put(square, ntile2);
 			}
+			//xG = new XGraph(this); //update xG graph
 			
 			/*
 			if (!checkGraph()) { //this assertion will slow down things and should be 
@@ -590,18 +674,40 @@ public class XRibTiling {
 			return flips;
 		}
 	
-		
-		public void draw() {
-			shape.draw();
-			draw(shape.myDr);			
+	   public void draw() {
+           draw("", 500, false);	
 		}
 		
-		public void draw(Draw dr) {
+		public void draw(String s, int size, boolean withLabels) {
+			shape.draw(s, size);
+			if (withLabels) {
+				drawWithLabels(shape.myDr);		
+			} else {
+			    draw(shape.myDr);	
+			}
+		}
+		
+		/*
+		public void drawWithLabels(String s, int size) {
+			shape.draw(s, size);
+			drawWithLabels(shape.myDr);			
+		}
+		*/
+		void draw(Draw dr) {
 			shape.drawShape(dr);
 			for (XRibTile tile : tiling) {
 				if (tile != null) {
-				//StdOut.println("Drawing tile " + tile);
-				tile.draw(dr);
+				tile.draw(dr, - 1);
+				}
+			}
+		}
+		
+		private void drawWithLabels(Draw dr) {
+			shape.drawShape(dr);
+			for (int v = 0; v < tiling.size(); v++) {
+				XRibTile tile = tiling.get(v);
+				if (tile != null) {
+				tile.draw(dr, v);
 				}
 			}
 		}
@@ -646,12 +752,14 @@ public class XRibTiling {
 	 */
 	public static void main(String[] args) {
 
-		ArrayList<Integer> shapeI = new ArrayList<Integer>();
-		ArrayList<Integer> shapeF = new ArrayList<Integer>();
+		//ArrayList<Integer> shapeI = new ArrayList<Integer>();
+		//ArrayList<Integer> shapeF = new ArrayList<Integer>();
 		
 		/* Test case 1
 		 * 	
 		 */	
+		
+		/*
 		int n = 4;
 		int N = 6; 
 		for (int i = 0; i < N; i ++){
@@ -668,6 +776,48 @@ public class XRibTiling {
 		int ITER = 10000;
 		XUtility.Glauber(xrtCopy, ITER);
 		xrtCopy.draw();
+		*/
+		/*Test case 2
+		 * 
+		 * 
+		 */
+		int n = 3;
+		int M = 6;
+		int N = 6;
+		//XRibTiling xrt = rectangle(n, M, N);
+		//StdOut.println("Graph is " + xrt.xG);
+		//StdOut.println("Number of reversible edges = " + xrt.xG.edges.size());
+		//xrt.xG.draw();
+		
+		
+		/* Conclusion from the following experiment:
+		 * This method of generating a random orientation does not 
+		 * lead to a uniformly distributed tiling
+		 */
+		/*
+		xrt.xG.randomOrientation();
+		xrt.buildTilingFromXG();
+		xrt.xG.draw();
+		StdOut.println("Number of reversible edges = " + xrt.xG.edges.size());
+		*/
+		//xrt.draw();
+		//StdOut.println("Digraph is : " + xrt.xG);
+		
+		XRibTiling xrt = rectangleRandom(n, M, N);
 
+		
+		xrt.xG.draw("", 500, true);
+		StdOut.println("Number of reversible edges = " + xrt.xG.edges.size());
+		StdOut.println("Reversible edges = " + xrt.xG.edges);
+		
+		XRibTile t1 = xrt.tiling.get(xrt.xG.edges.get(0).u);
+		XRibTile t2 = xrt.tiling.get(xrt.xG.edges.get(0).v);
+		StdOut.println("Tiles to exchange are " + t1 + " and " + t2);
+		XRibTiling xrt2 = new  XRibTiling(xrt);
+		xrt2.flip(t1, t2);
+		xrt2.xG.draw();
+		xrt2.H.calcHeightInside();
+		xrt2.H.draw();
+		
 	}
 }

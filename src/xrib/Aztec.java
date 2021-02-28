@@ -108,8 +108,10 @@ public class Aztec {
 		int ITER = 100000; //100,000 iterations took around 88 seconds = 1.5 minutes in the new version. 
 		//int ITER = 1;
 		//exampleAztecFish(N, ITER);
+		
 		N = 21; //N = 20 does not work for the square if n = 3.
 		exampleSquare(N, ITER);
+		
 		
 		/*
 		 * 

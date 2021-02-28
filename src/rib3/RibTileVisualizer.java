@@ -1,3 +1,4 @@
+
 package rib3;
 import edu.princeton.cs.algs4.Draw;
 import edu.princeton.cs.algs4.StdOut;

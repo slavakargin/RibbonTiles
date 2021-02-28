@@ -450,11 +450,15 @@ public class XShape {
 		return null;
 	}
 
-
+	
 	public void draw() {
+		draw("", 500);
+	}
+
+	public void draw(String s, int size) {
 		if (myDr == null) {
-			myDr = new Draw();
-			myDr.setCanvasSize(800, 800);
+			myDr = new Draw(s);
+			myDr.setCanvasSize(size, size);
 		}
 		drawShape(myDr);
 	}
@@ -524,6 +528,43 @@ public class XShape {
 		myDr.line(0, l, l, 0);
 		myDr.setPenColor(Draw.BLACK);
 	}
+
+	/**
+	 * Tests the tileability of the shape by tiles of lenght n
+	 *  by checking if the shape has the same
+	 * number of squares of each color.
+	 * @param xRibTiling TODO
+	 */
+	Boolean isTileable(int n){
+		int[] count = new int[n]; // counter for the colors 
+		                          //(the calculation is up to a constant, same for each color)
+		int color;
+		for (Square s: squares) {
+			color = (s.x + s.y + n) % n;
+			count[color]++;
+		}
+		for (int i = 0; i < n - 1; i++) {
+			if (count[i] != count[i + 1]) return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * counts how many squares of each color if we color shape by  n colors.
+	 * @param n
+	 * @return
+	 */
+	public int[] countColoredSquares(int n){
+		int[] count = new int[n]; // counter for the colors 
+        //(the calculation is up to a constant, same for each color)
+        int color;
+        for (Square s: squares) {
+             color = (s.x + s.y + n) % n;
+             count[color]++;
+        }
+        return count;
+	}
+	
 
 	/**
 	 * For testing methods

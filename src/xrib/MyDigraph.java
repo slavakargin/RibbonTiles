@@ -1,10 +1,12 @@
 package xrib;
 import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.DirectedCycle;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.StdOut;
 import java.lang.Iterable;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Collections;
 
 
 /**
@@ -156,7 +158,7 @@ public class MyDigraph {
 	 * @param v
 	 * @return
 	 */
-	public Iterable<Integer> adj(int v) {
+	public ArrayList<Integer> adj(int v) {
 		ArrayList<Integer> adjVector = new  ArrayList<Integer>();
 		for (int u : DG.adj(v)) {
 			adjVector.add(u);
@@ -205,7 +207,59 @@ public class MyDigraph {
 	public Digraph reverse() {
 		return DG.reverse();
 	}
+	
+	/**
+	 * tests the existence of a cycle in the graph
+	 * @return
+	 */
 
+	public Boolean hasCycle() {
+		DirectedCycle dc = new DirectedCycle(DG);
+		return dc.hasCycle();
+	}
+
+	/**
+	 * returns a cycle in the graph
+	 * @return
+	 */
+
+	public ArrayList<Integer> cycle() {
+		ArrayList<Integer> c = new ArrayList<Integer>();
+		DirectedCycle dc = new DirectedCycle(DG);
+		for (int v : dc.cycle()) {
+			c.add(v);
+		}
+		return c;
+	}
+	
+	/**
+	 * returns smallest sink in the digraph induced by set of vertices X
+	 * 
+	 */
+	
+    public int smallestSink(ArrayList<Integer> X) {
+       int s = 0;
+       //first, let us find all sinks
+       ArrayList<Integer> sinks = new ArrayList<Integer>();
+       for (int i = 0; i < X.size(); i++) {
+    	   int v = X.get(i);
+    	   boolean flag = true;
+    	   for (int w : adj(v)) {
+    		   if (X.contains(w)) {
+    			   flag = false;
+    			   break;
+    		   }
+    	   }
+    	   if (flag) {
+    		  sinks.add(v);
+    	   }
+       }
+       //StdOut.println("Sinks = " + sinks);
+       //now let us find minimum
+       s = Collections.min(sinks);
+       return s;
+    }
+	
 	/**
 	 * 	Returns a string representation of the graph.
 	Overrides:
